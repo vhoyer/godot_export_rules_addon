@@ -1,0 +1,142 @@
+[gd_scene load_steps=2 format=3 uid="uid://chm161vqw5db"]
+
+[ext_resource type="Script" uid="uid://bfyo4bd22y84s" path="res://addons/export_rules/export_rules_panel.gd" id="1_panel"]
+
+[node name="ExportRulesPanel" type="VBoxContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="Inner" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Toolbar" type="HBoxContainer" parent="MarginContainer/Inner"]
+layout_mode = 2
+
+[node name="UpdateButton" type="Button" parent="MarginContainer/Inner/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Update Export Presets"
+
+[node name="ScanButton" type="Button" parent="MarginContainer/Inner/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Scan for New Folders"
+
+[node name="ImportButton" type="Button" parent="MarginContainer/Inner/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Import from Current Presets"
+
+[node name="Spacer" type="Control" parent="MarginContainer/Inner/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PolicyLabel" type="Label" parent="MarginContainer/Inner/Toolbar"]
+layout_mode = 2
+text = "New folder policy:"
+
+[node name="NewFolderPolicyOption" type="OptionButton" parent="MarginContainer/Inner/Toolbar"]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 6
+popup/item_0/text = "Auto Include"
+popup/item_0/id = 0
+popup/item_1/text = "Auto Exclude"
+popup/item_1/id = 1
+popup/item_2/text = "Ask"
+popup/item_2/id = 2
+popup/item_3/text = "Auto Include"
+popup/item_3/id = 0
+popup/item_4/text = "Auto Exclude"
+popup/item_4/id = 1
+popup/item_5/text = "Ask"
+popup/item_5/id = 2
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/Inner"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/Inner"]
+layout_mode = 2
+
+[node name="Split" type="HSplitContainer" parent="MarginContainer/Inner"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+split_offset = 500
+
+[node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/Inner/Split"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PathRulesLabel" type="Label" parent="MarginContainer/Inner/Split/LeftPanel"]
+layout_mode = 2
+text = "Path Rules"
+
+[node name="RulesTree" type="Tree" parent="MarginContainer/Inner/Split/LeftPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+columns = 3
+column_titles_visible = true
+hide_root = true
+
+[node name="ListActions" type="HBoxContainer" parent="MarginContainer/Inner/Split/LeftPanel"]
+layout_mode = 2
+
+[node name="AddFolderButton" type="Button" parent="MarginContainer/Inner/Split/LeftPanel/ListActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Folder Rule"
+
+[node name="AddFileButton" type="Button" parent="MarginContainer/Inner/Split/LeftPanel/ListActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add File Rule"
+
+[node name="RemoveButton" type="Button" parent="MarginContainer/Inner/Split/LeftPanel/ListActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Remove Rule"
+
+[node name="RightPanel" type="VBoxContainer" parent="MarginContainer/Inner/Split"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+
+[node name="RuleEditorLabel" type="Label" parent="MarginContainer/Inner/Split/RightPanel"]
+layout_mode = 2
+text = "Rule Editor"
+
+[node name="RuleEditorSeparator" type="HSeparator" parent="MarginContainer/Inner/Split/RightPanel"]
+layout_mode = 2
+
+[node name="EditorContainer" type="VBoxContainer" parent="MarginContainer/Inner/Split/RightPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FileDialog" type="EditorFileDialog" parent="."]
+unique_name_in_owner = true
+
+[node name="AskDialog" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "New Folder Detected"
