@@ -1,0 +1,40 @@
+{
+	"known_paths": [
+		"res://test/",
+		"res://addons/gut/",
+		"res://test_case/exclude_based_on_feature/",
+		"res://stages/",
+		"res://stages/main_menu/",
+		"res://stages/stage_demo/",
+		"res://stages/level_full/",
+		"res://stages/level_demo/",
+		"res://test/e2e/"
+	],
+	"new_folder_policy": 0,
+	"rules": [
+		{
+			"comment": "",
+			"path": "res://test",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://addons/gut",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://stages/level_demo",
+			"required_tags": [
+				"demo"
+			]
+		},
+		{
+			"comment": "",
+			"path": "res://stages/level_full",
+			"required_tags": [
+				"full"
+			]
+		}
+	]
+}

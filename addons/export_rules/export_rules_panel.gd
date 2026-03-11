@@ -55,6 +55,7 @@ func _ready() -> void:
 	_rules_tree.set_column_expand(2, false)
 	_rules_tree.set_column_custom_minimum_width(2, 140)
 
+	_new_folder_policy_option.clear()
 	_new_folder_policy_option.add_item('Auto Include', ExportRulesConfig.NewFolderPolicy.AUTO_INCLUDE)
 	_new_folder_policy_option.add_item('Auto Exclude', ExportRulesConfig.NewFolderPolicy.AUTO_EXCLUDE)
 	_new_folder_policy_option.add_item('Ask', ExportRulesConfig.NewFolderPolicy.ASK)
@@ -392,7 +393,15 @@ func check_for_new_folders() -> void:
 	var current_folders: Array[String] = []
 	_scan_folders_recursive('res://', current_folders)
 	for folder_path in current_folders:
-		if not _known_folders_cache.has(folder_path):
+		if _known_folders_cache.has(folder_path):
+			continue
+		# Skip if a parent folder is also new — only report the topmost new folder.
+		var parent_is_new := false
+		for other in current_folders:
+			if other != folder_path and folder_path.begins_with(other) and not _known_folders_cache.has(other):
+				parent_is_new = true
+				break
+		if not parent_is_new:
 			_on_new_folder_detected(folder_path)
 	_known_folders_cache = current_folders
 

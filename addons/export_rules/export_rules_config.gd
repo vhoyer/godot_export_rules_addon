@@ -23,6 +23,7 @@ func get_rule_for_path(target_path: String) -> Resource:
 
 
 func add_rule(target_path: String) -> Resource:
+	target_path = target_path.trim_suffix('/')
 	var existing:= get_rule_for_path(target_path)
 	if existing:
 		return existing

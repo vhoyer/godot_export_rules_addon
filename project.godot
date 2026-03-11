@@ -14,6 +14,17 @@ config/name="Export Rules Addon"
 config/features=PackedStringArray("4.6")
 config/icon="res://icon.svg"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/export_rules/plugin.cfg", "res://addons/gut/plugin.cfg")
+
+[file_customization]
+
+folder_colors={
+"res://addons/": "gray",
+"res://stages/": "yellow"
+}
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

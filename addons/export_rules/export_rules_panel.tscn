@@ -55,20 +55,13 @@ text = "New folder policy:"
 [node name="NewFolderPolicyOption" type="OptionButton" parent="MarginContainer/Inner/Toolbar"]
 unique_name_in_owner = true
 layout_mode = 2
-selected = 0
-item_count = 6
+item_count = 3
 popup/item_0/text = "Auto Include"
 popup/item_0/id = 0
 popup/item_1/text = "Auto Exclude"
 popup/item_1/id = 1
 popup/item_2/text = "Ask"
 popup/item_2/id = 2
-popup/item_3/text = "Auto Include"
-popup/item_3/id = 0
-popup/item_4/text = "Auto Exclude"
-popup/item_4/id = 1
-popup/item_5/text = "Ask"
-popup/item_5/id = 2
 
 [node name="StatusLabel" type="Label" parent="MarginContainer/Inner"]
 unique_name_in_owner = true

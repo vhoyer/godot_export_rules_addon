@@ -18,6 +18,16 @@ func update(config: ExportRulesConfig) -> int:
 		push_error('[ExportRules] Cannot parse export_presets.cfg: ' + str(load_error))
 		return ERR_PARSE_ERROR
 
+	_apply_rules(config, cfg)
+
+	var save_error:= cfg.save(PRESETS_PATH)
+	if save_error != OK:
+		push_error('[ExportRules] Cannot write export_presets.cfg: ' + str(save_error))
+		return ERR_FILE_NOT_FOUND
+	return OK
+
+
+func _apply_rules(config: Resource, cfg: ConfigFile) -> void:
 	for section in cfg.get_sections():
 		if not _is_preset_section(section):
 			continue
@@ -25,12 +35,6 @@ func update(config: ExportRulesConfig) -> int:
 		var excluded_files:= _compute_excluded_files(config, tags)
 		cfg.set_value(section, 'export_filter', 'exclude')
 		cfg.set_value(section, 'export_files', PackedStringArray(excluded_files))
-
-	var save_error:= cfg.save(PRESETS_PATH)
-	if save_error != OK:
-		push_error('[ExportRules] Cannot write export_presets.cfg: ' + str(save_error))
-		return ERR_FILE_NOT_FOUND
-	return OK
 
 
 func _is_preset_section(section: String) -> bool:
