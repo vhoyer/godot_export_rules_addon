@@ -10,7 +10,7 @@ Managing multiple export variants in Godot means editing `export_presets.cfg` by
 
 Export Rules gives you a visual editor where you tag each folder or file with the presets it belongs to. Hit **Update Export Presets** and the plugin computes the right file list for every preset automatically.
 
-![Export Rules Panel screenshot](./assets/export_rules_panel_screenshot.png)
+|![Export Rules Panel screenshot](./assets/export_rules_panel_screenshot.png)|![Godot Export Menu](./assets/godot_export_menu.png)|
 
 ## How It Works
 
