@@ -3,6 +3,7 @@ extends RefCounted
 
 const ExportRulesConfig = preload('res://addons/export_rules/export_rules_config.gd')
 const PRESETS_PATH:= 'res://export_presets.cfg'
+const EXCLUDED_FILES: Array[String] = ['project.godot', 'export_presets.cfg', 'export_rules.json']
 
 
 ## Update export_presets.cfg based on the given config rules.
@@ -82,7 +83,7 @@ func _collect_included_recursive(dir_res_path: String, rules: Array, ignored_glo
 			if dir.current_is_dir():
 				if not _is_ignored_dir(full_res_path):
 					_collect_included_recursive(full_res_path, rules, ignored_globs, preset_tags, resource_files, non_resource_files)
-			elif not entry_name.ends_with('.import') and not entry_name.ends_with('.uid'):
+			elif not entry_name.ends_with('.import') and not entry_name.ends_with('.uid') and not entry_name in EXCLUDED_FILES:
 				if not _matches_any_glob(entry_name, ignored_globs):
 					var rule = _find_matching_rule(full_res_path, rules)
 					if rule == null or rule.should_include_for_tags(preset_tags):

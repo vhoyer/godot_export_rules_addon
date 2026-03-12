@@ -4,6 +4,7 @@ extends VBoxContainer
 const ExportPresetsUpdater = preload('res://addons/export_rules/export_presets_updater.gd')
 const ExportRulesConfig = preload('res://addons/export_rules/export_rules_config.gd')
 const PathRule = preload('res://addons/export_rules/path_rule.gd')
+const HIDDEN_FILES: Array[String] = ['project.godot', 'export_presets.cfg', 'export_rules.json']
 
 var _config: ExportRulesConfig
 var _plugin: EditorPlugin
@@ -160,7 +161,7 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 		if not entry.begins_with('.'):
 			if dir.current_is_dir():
 				subdirs.append(entry)
-			elif not entry.ends_with('.import') and not entry.ends_with('.uid'):
+			elif not entry.ends_with('.import') and not entry.ends_with('.uid') and not entry in HIDDEN_FILES:
 				files.append(entry)
 		entry = dir.get_next()
 	dir.list_dir_end()
