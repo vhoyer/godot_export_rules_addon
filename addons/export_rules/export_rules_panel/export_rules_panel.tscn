@@ -50,11 +50,6 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Scan for New Folders"
 
-[node name="ImportButton" type="Button" parent="MarginContainer/Inner/Toolbar/VBoxContainer/HFlowContainer" unique_id=303224611]
-unique_name_in_owner = true
-layout_mode = 2
-text = "Import from Current Presets"
-
 [node name="StatusLabel" type="Label" parent="MarginContainer/Inner/Toolbar/VBoxContainer" unique_id=1819245451]
 unique_name_in_owner = true
 layout_mode = 2

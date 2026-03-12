@@ -35,33 +35,19 @@ func test_preset_dot_only_is_not_valid() -> void:
 	assert_false(updater._is_preset_section('preset.'))
 
 
-# --- parse_packed_string_array ---
-
-func test_parse_empty_packed_string_array() -> void:
-	var result := updater.parse_packed_string_array('PackedStringArray()')
-	assert_eq(result, [])
+# _is_godot_resource delegates to ResourceLoader.exists(), which Godot uses
+# internally to determine if a path is a loadable resource. Integration-level
+# coverage (real project files) is more meaningful than unit tests here.
 
 
-func test_parse_missing_packed_string_array_marker() -> void:
-	var result := updater.parse_packed_string_array('something else entirely')
-	assert_eq(result, [])
+# --- _is_ignored_dir ---
+
+func test_regular_dir_is_not_ignored() -> void:
+	assert_false(updater._is_ignored_dir('res://scenes'))
 
 
-func test_parse_single_element() -> void:
-	var result: Array[String] = updater.parse_packed_string_array('PackedStringArray("res://file.gd")')
-	assert_eq(result.size(), 1)
-	assert_eq(result[0], 'res://file.gd')
+func test_gdignore_dir_is_ignored() -> void:
+	# .godot/ contains a .gdignore (and is itself dot-prefixed, so doubly ignored)
+	assert_true(updater._is_ignored_dir('res://.godot'))
 
-
-func test_parse_two_elements() -> void:
-	var result: Array[String] = updater.parse_packed_string_array('PackedStringArray("res://a.gd", "res://b.gd")')
-	assert_eq(result.size(), 2)
-	assert_eq(result[0], 'res://a.gd')
-	assert_eq(result[1], 'res://b.gd')
-
-
-func test_parse_three_elements() -> void:
-	var result: Array[String] = updater.parse_packed_string_array('PackedStringArray("res://a.gd", "res://b.gd", "res://c.gd")')
-	assert_eq(result.size(), 3)
-	assert_eq(result[2], 'res://c.gd')
 

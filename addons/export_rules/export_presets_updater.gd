@@ -79,13 +79,22 @@ func _collect_included_recursive(dir_res_path: String, rules: Array, preset_tags
 			else:
 				full_res_path = dir_res_path + '/' + entry_name
 			if dir.current_is_dir():
-				_collect_included_recursive(full_res_path, rules, preset_tags, result)
-			else:
+				if not _is_ignored_dir(full_res_path):
+					_collect_included_recursive(full_res_path, rules, preset_tags, result)
+			elif _is_godot_resource(full_res_path):
 				var rule = _find_matching_rule(full_res_path, rules)
 				if rule == null or rule.should_include_for_tags(preset_tags):
 					result.append(full_res_path)
 		entry_name = dir.get_next()
 	dir.list_dir_end()
+
+
+func _is_ignored_dir(dir_res_path: String) -> bool:
+	return FileAccess.file_exists(dir_res_path + '/.gdignore')
+
+
+func _is_godot_resource(file_path: String) -> bool:
+	return ResourceLoader.exists(file_path)
 
 
 func _find_matching_rule(file_path: String, rules: Array):
@@ -94,28 +103,3 @@ func _find_matching_rule(file_path: String, rules: Array):
 		if file_path == rule_path or file_path.begins_with(rule_path + '/'):
 			return rule
 	return null
-
-
-## Parse a PackedStringArray(...) line value into an Array of strings.
-## Used by the panel for importing existing export_presets.cfg entries.
-func parse_packed_string_array(line_value: String) -> Array[String]:
-	var result: Array[String] = []
-	var start:= line_value.find('PackedStringArray(')
-	if start == -1:
-		return result
-	start += len('PackedStringArray(')
-	var end:= line_value.rfind(')')
-	if end == -1 or end <= start:
-		return result
-	var content:= line_value.substr(start, end - start).strip_edges()
-	if content.is_empty():
-		return result
-	if content.begins_with('"'):
-		content = content.substr(1)
-	if content.ends_with('"'):
-		content = content.substr(0, content.length() - 1)
-	var parts:= content.split('", "')
-	for part in parts:
-		if not part.is_empty():
-			result.append(part)
-	return result

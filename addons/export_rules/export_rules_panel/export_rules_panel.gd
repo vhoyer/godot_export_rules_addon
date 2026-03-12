@@ -29,7 +29,6 @@ var _ask_dialog: ConfirmationDialog = %AskDialog
 func _ready() -> void:
 	%UpdateButton.pressed.connect(_on_update_pressed)
 	%ScanButton.pressed.connect(_on_scan_pressed)
-	%ImportButton.pressed.connect(_on_import_pressed)
 	%AddFolderButton.pressed.connect(_on_add_folder_pressed)
 	%AddFileButton.pressed.connect(_on_add_file_pressed)
 	%RemoveButton.pressed.connect(_on_remove_rule_pressed)
@@ -273,10 +272,6 @@ func _on_scan_pressed() -> void:
 	_set_status('Scan complete.')
 
 
-func _on_import_pressed() -> void:
-	_import_from_current_presets()
-
-
 func _on_policy_changed(index: int) -> void:
 	if not _config:
 		return
@@ -367,54 +362,3 @@ func _on_ask_dialog_canceled() -> void:
 		_set_status('Included new folder: ' + _pending_new_path)
 	_pending_new_path = ''
 
-
-func _import_from_current_presets() -> void:
-	if not FileAccess.file_exists('res://export_presets.cfg'):
-		_set_status('No export_presets.cfg found.')
-		return
-	var file:= FileAccess.open('res://export_presets.cfg', FileAccess.READ)
-	if not file:
-		_set_status('Cannot read export_presets.cfg.')
-		return
-	var lines:= file.get_as_text().split('\n')
-	file.close()
-
-	var all_excluded_paths: Array[String] = []
-	for line in lines:
-		var trimmed:= line.strip_edges()
-		if trimmed.begins_with('export_files='):
-			var updater:= ExportPresetsUpdater.new()
-			var files:= updater.parse_packed_string_array(trimmed.trim_prefix('export_files='))
-			for file_path in files:
-				if not all_excluded_paths.has(file_path):
-					all_excluded_paths.append(file_path)
-			break
-
-	var folder_counts: Dictionary = {}
-	for file_path in all_excluded_paths:
-		var folder: String = file_path.get_base_dir()
-		if not folder_counts.has(folder):
-			folder_counts[folder] = 0
-		folder_counts[folder] += 1
-
-	var imported_count: int = 0
-	var folders_with_many: Array[String] = []
-	for folder in folder_counts:
-		if (folder_counts[folder] as int) >= 3:
-			folders_with_many.append(folder as String)
-
-	for folder in folders_with_many:
-		if not _config.get_rule_for_path(folder):
-			_config.add_rule(folder)
-			imported_count += 1
-
-	for file_path in all_excluded_paths:
-		var folder: String = file_path.get_base_dir()
-		if not folders_with_many.has(folder):
-			if not _config.get_rule_for_path(file_path):
-				_config.add_rule(file_path)
-				imported_count += 1
-
-	_config.save()
-	refresh_file_tree()
-	_set_status('Imported %d rules from export_presets.cfg. Assign tags to customize.' % imported_count)
