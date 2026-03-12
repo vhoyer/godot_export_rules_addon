@@ -10,8 +10,10 @@ const ExportRulesConfig = preload('res://addons/export_rules/export_rules_config
 const PathRule = preload('res://addons/export_rules/path_rule.gd')
 
 # Real files that exist in this project, used as stable test fixtures.
-const FILE_A := 'res://icon.svg'
-const FILE_B := 'res://project.godot'
+# Both are GDScript resources so ResourceLoader.exists() returns true for them.
+# FILE_A sorts before FILE_B alphabetically ('e' < 'p'), which the sort test relies on.
+const FILE_A := 'res://addons/export_rules/export_presets_updater.gd'
+const FILE_B := 'res://addons/export_rules/path_rule.gd'
 
 var updater: ExportPresetsUpdater
 
@@ -206,8 +208,8 @@ custom_features="mytag"
 """)
 	# Rules in reverse alphabetical order — output must still be sorted.
 	var config := _make_config([
-		_make_rule(FILE_B, ['mytag']),  # res://project.godot
-		_make_rule(FILE_A, ['mytag']),  # res://icon.svg
+		_make_rule(FILE_B, ['mytag']),  # path_rule.gd — sorts after FILE_A
+		_make_rule(FILE_A, ['mytag']),  # export_presets_updater.gd — sorts before FILE_B
 	])
 	updater._apply_rules(config, cfg)
 	var result := _export_files(cfg, 'preset.0')
