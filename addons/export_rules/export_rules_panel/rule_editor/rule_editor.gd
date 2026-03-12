@@ -102,9 +102,9 @@ func _refresh_tags_display() -> void:
 
 
 func _refresh_preset_preview() -> void:
+	_preset_preview_tree.clear()
 	if not _selected_rule:
 		return
-	_preset_preview_tree.clear()
 	var root := _preset_preview_tree.create_item()
 	root.set_text(0, 'Presets')
 	for preset_info in _read_presets_summary():
@@ -142,6 +142,8 @@ func _read_presets_summary() -> Array:
 			current_tags = []
 			in_preset = true
 		elif trimmed.begins_with('['):
+			if in_preset and not current_name.is_empty():
+				result.append({'name': current_name, 'tags': current_tags.duplicate()})
 			in_preset = false
 		elif in_preset and trimmed.begins_with('name='):
 			current_name = trimmed.trim_prefix('name=').trim_prefix('"').trim_suffix('"')
