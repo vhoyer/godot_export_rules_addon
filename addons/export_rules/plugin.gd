@@ -78,3 +78,9 @@ func _on_filesystem_changed() -> void:
 func _project_settings_changed() -> void:
 	if _panel:
 		(_panel as ExportRulesPanel).refresh_file_tree()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		if _panel:
+			(_panel as ExportRulesPanel).refresh_file_tree()

@@ -13,6 +13,7 @@ enum NewFolderPolicy {
 var new_folder_policy: int = NewFolderPolicy.ASK
 var rules: Array = []  # Array of PathRule
 var known_paths: Array[String] = []  # All paths seen; used to detect new folders
+var ignored_globs: Array[String] = []  # Glob patterns; matching files are hidden from tree and excluded from all presets
 
 
 func get_rule_for_path(target_path: String) -> Resource:
@@ -59,6 +60,7 @@ func save() -> void:
 	var data: Dictionary = {
 		'new_folder_policy': new_folder_policy,
 		'known_paths': known_paths,
+		'ignored_globs': ignored_globs,
 		'rules': [],
 	}
 	for rule in rules:
@@ -94,6 +96,11 @@ func load_from_json() -> void:
 		var raw_known: Array = data['known_paths'] as Array
 		for p in raw_known:
 			known_paths.append(p as String)
+	if data.has('ignored_globs'):
+		ignored_globs.clear()
+		var raw_globs: Array = data['ignored_globs'] as Array
+		for g in raw_globs:
+			ignored_globs.append(g as String)
 	if data.has('rules'):
 		rules.clear()
 		for rule_data: Dictionary in data['rules']:

@@ -5,6 +5,7 @@ const TagChip = preload("res://addons/export_rules/export_rules_panel/rule_edito
 
 signal rules_changed
 signal rule_delete_requested
+signal preview_refresh_needed(rule: Resource)
 
 var _config: Resource
 var _selected_path: String = ''
@@ -16,7 +17,6 @@ var _selected_rule: Resource
 @onready var _tags_flow: HFlowContainer = %TagsFlow
 @onready var _new_tag_edit: LineEdit = %NewTagEdit
 @onready var _comment_edit: LineEdit = %CommentEdit
-@onready var _preset_preview_tree: Tree = %PresetPreviewTree
 @onready var _add_rule_button: Button = %AddRuleButton
 @onready var _delete_button: Button = %DeleteButton
 
@@ -27,12 +27,6 @@ func _ready() -> void:
 	_comment_edit.text_changed.connect(_on_comment_changed)
 	_add_rule_button.pressed.connect(_on_add_rule_pressed)
 	_delete_button.pressed.connect(func() -> void: rule_delete_requested.emit())
-
-	_preset_preview_tree.hide_root = true
-	_preset_preview_tree.columns = 2
-	_preset_preview_tree.set_column_title(0, 'Preset')
-	_preset_preview_tree.set_column_title(1, 'Result')
-	_preset_preview_tree.set_column_titles_visible(true)
 
 	show_placeholder()
 
@@ -67,7 +61,7 @@ func _refresh_ui() -> void:
 	_delete_button.tooltip_text = 'No rule exists for this path yet' if not _selected_rule else ''
 
 	_refresh_tags_display()
-	_refresh_preset_preview()
+	preview_refresh_needed.emit(_selected_rule)
 
 
 func _refresh_tags_display() -> void:
@@ -90,68 +84,9 @@ func _refresh_tags_display() -> void:
 			_selected_rule.required_tags.erase(tag_copy)
 			_config.save()
 			_refresh_tags_display()
-			_refresh_preset_preview()
+			preview_refresh_needed.emit(_selected_rule)
 			rules_changed.emit()
 		)
-
-
-func _refresh_preset_preview() -> void:
-	_preset_preview_tree.clear()
-	if not _selected_rule:
-		return
-	var root := _preset_preview_tree.create_item()
-	root.set_text(0, 'Presets')
-	for preset_info in _read_presets_summary():
-		var item := _preset_preview_tree.create_item(root)
-		item.set_text(0, preset_info['name'] as String)
-		var tags: Array[String] = []
-		tags.assign(preset_info['tags'])
-		var included: bool = _selected_rule.should_include_for_tags(tags)
-		if included:
-			item.set_text(1, 'Included')
-			item.set_custom_color(1, Color(0.4, 1, 0.4))
-		else:
-			item.set_text(1, 'Excluded')
-			item.set_custom_color(1, Color(1, 0.4, 0.4))
-
-
-func _read_presets_summary() -> Array:
-	var result: Array = []
-	if not FileAccess.file_exists('res://export_presets.cfg'):
-		return result
-	var file := FileAccess.open('res://export_presets.cfg', FileAccess.READ)
-	if not file:
-		return result
-	var lines := file.get_as_text().split('\n')
-	file.close()
-	var current_name: String = ''
-	var current_tags: Array[String] = []
-	var in_preset: bool = false
-	for line in lines:
-		var trimmed := line.strip_edges()
-		if trimmed.begins_with('[preset.') and not trimmed.contains('.options'):
-			if in_preset and not current_name.is_empty():
-				result.append({'name': current_name, 'tags': current_tags.duplicate()})
-			current_name = ''
-			current_tags = []
-			in_preset = true
-		elif trimmed.begins_with('['):
-			if in_preset and not current_name.is_empty():
-				result.append({'name': current_name, 'tags': current_tags.duplicate()})
-			in_preset = false
-		elif in_preset and trimmed.begins_with('name='):
-			current_name = trimmed.trim_prefix('name=').trim_prefix('"').trim_suffix('"')
-		elif in_preset and trimmed.begins_with('custom_features='):
-			var raw := trimmed.trim_prefix('custom_features=').trim_prefix('"').trim_suffix('"')
-			current_tags = []
-			if not raw.is_empty():
-				for tag in raw.split(','):
-					var cleaned := tag.strip_edges()
-					if not cleaned.is_empty():
-						current_tags.append(cleaned)
-	if in_preset and not current_name.is_empty():
-		result.append({'name': current_name, 'tags': current_tags.duplicate()})
-	return result
 
 
 func _is_directory_path(path: String) -> bool:
@@ -180,7 +115,7 @@ func _on_add_tag(tag: String) -> void:
 		_selected_rule.required_tags.append(tag)
 		_config.save()
 		_refresh_tags_display()
-		_refresh_preset_preview()
+		preview_refresh_needed.emit(_selected_rule)
 		if newly_created:
 			_refresh_ui()
 		rules_changed.emit()

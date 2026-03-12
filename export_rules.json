@@ -1,4 +1,7 @@
 {
+	"ignored_globs": [
+		"*Zone.Identifier"
+	],
 	"known_paths": [
 		"res://test/",
 		"res://addons/gut/",
@@ -36,9 +39,11 @@
 		"res://entities/",
 		"res://entities/folder_with_non_resource/",
 		"res://entities/only_non_resources/",
-		"res://addons/export_rules/export_rules_panel/rule_editor/tag_chip/"
+		"res://addons/export_rules/export_rules_panel/rule_editor/tag_chip/",
+		"res://addons/export_rules/export_rules_panel/rule_editor/preset_preview/",
+		"res://addons/export_rules/export_rules_panel/preset_preview/"
 	],
-	"new_folder_policy": 0,
+	"new_folder_policy": 1,
 	"rules": [
 		{
 			"comment": "",
@@ -67,6 +72,36 @@
 		{
 			"comment": "",
 			"path": "res://test",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://LICENSE",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://README.md",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://export_presets.cfg",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://export_rules.json",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://project.godot",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://entities/ignored folder",
 			"required_tags": []
 		}
 	]

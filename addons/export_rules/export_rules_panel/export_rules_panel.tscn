@@ -3,6 +3,7 @@
 [ext_resource type="Theme" uid="uid://5dwtht7s2b1c" path="res://addons/export_rules/assets/export_rules_theme.tres" id="1_jukm1"]
 [ext_resource type="Script" uid="uid://bfyo4bd22y84s" path="res://addons/export_rules/export_rules_panel/export_rules_panel.gd" id="1_panel"]
 [ext_resource type="PackedScene" uid="uid://druleedit0001" path="res://addons/export_rules/export_rules_panel/rule_editor/rule_editor.tscn" id="2_editor"]
+[ext_resource type="PackedScene" uid="uid://dpresetprev01" path="res://addons/export_rules/export_rules_panel/preset_preview/preset_preview.tscn" id="4_gg6ld"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_jukm1"]
 content_margin_left = 6.0
@@ -101,14 +102,19 @@ theme_override_constants/separation = 6
 split_offsets = PackedInt32Array(-372)
 split_offset = -372
 
-[node name="LeftPanel" type="TabContainer" parent="MarginContainer/Inner/PanelContainer/Split" unique_id=89849262]
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Inner/PanelContainer/Split" unique_id=224977585]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LeftPanel" type="TabContainer" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer" unique_id=89849262]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 current_tab = 0
 tab_0/title = "Rules Tree"
 
-[node name="RulesTree" type="Tree" parent="MarginContainer/Inner/PanelContainer/Split/LeftPanel" unique_id=608821690]
+[node name="RulesTree" type="Tree" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer/LeftPanel" unique_id=608821690]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
@@ -118,16 +124,57 @@ hide_root = true
 metadata/_tab_index = 0
 metadata/_tab_name = "Rules Tree"
 
-[node name="RightPanel" type="TabContainer" parent="MarginContainer/Inner/PanelContainer/Split" unique_id=996037598]
+[node name="LeftBottom" type="TabContainer" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer" unique_id=461961838]
+layout_mode = 2
+current_tab = 0
+
+[node name="Options" type="VBoxContainer" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer/LeftBottom" unique_id=202389031]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="Label" type="Label" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer/LeftBottom/Options" unique_id=1573938662]
+layout_mode = 2
+text = "Filter Ignored Globs (comma separated)"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer/LeftBottom/Options" unique_id=1000000001]
+layout_mode = 2
+
+[node name="LineEdit" type="LineEdit" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer/LeftBottom/Options/HBoxContainer" unique_id=1404186102]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Files matching these patterns will be marked as 'Ignored by filter glob' in the Rules Tree and placed in the 'exclude' field of all export presets"
+placeholder_text = "*.json, *.dat, *.bin, *:Zone.Identifier"
+
+[node name="GlobRefreshButton" type="Button" parent="MarginContainer/Inner/PanelContainer/Split/VBoxContainer/LeftBottom/Options/HBoxContainer" unique_id=1000000002]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refresh File Tree"
+
+[node name="VSplitContainer" type="VSplitContainer" parent="MarginContainer/Inner/PanelContainer/Split" unique_id=1890714580]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RightPanel" type="TabContainer" parent="MarginContainer/Inner/PanelContainer/Split/VSplitContainer" unique_id=996037598]
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 current_tab = 0
 tab_0/title = "Rule Editor"
 
-[node name="RuleEditor" parent="MarginContainer/Inner/PanelContainer/Split/RightPanel" unique_id=2061547395 instance=ExtResource("2_editor")]
+[node name="RuleEditor" parent="MarginContainer/Inner/PanelContainer/Split/VSplitContainer/RightPanel" unique_id=2061547395 instance=ExtResource("2_editor")]
 unique_name_in_owner = true
 layout_mode = 2
 metadata/_tab_index = 0
 metadata/_tab_name = "Rule Editor"
+
+[node name="BottomRight" type="TabContainer" parent="MarginContainer/Inner/PanelContainer/Split/VSplitContainer" unique_id=819648108]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="PresetPreview" parent="MarginContainer/Inner/PanelContainer/Split/VSplitContainer/BottomRight" unique_id=2087311581 instance=ExtResource("4_gg6ld")]
+unique_name_in_owner = true
+metadata/_tab_index = 0
 
 [node name="AskDialog" type="ConfirmationDialog" parent="." unique_id=1181491516]
 unique_name_in_owner = true

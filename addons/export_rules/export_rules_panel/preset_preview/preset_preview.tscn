@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dpresetprev01"]
+
+[ext_resource type="Script" uid="uid://cnkc0l71tlmf0" path="res://addons/export_rules/export_rules_panel/preset_preview/preset_preview.gd" id="1_script"]
+
+[node name="PresetPreview" type="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_script")
+
+[node name="PreviewLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Export Preset Preview:"
+
+[node name="PresetPreviewTree" type="Tree" parent="." unique_id=100000001]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+column_titles_visible = true
+hide_root = true

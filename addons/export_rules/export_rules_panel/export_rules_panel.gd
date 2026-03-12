@@ -32,11 +32,15 @@ var _rules_tree: Tree = %RulesTree
 @onready
 var _rule_editor = %RuleEditor
 @onready
+var _preset_preview = %PresetPreview
+@onready
 var _status_label: Label = %StatusLabel
 @onready
 var _new_folder_policy_option: OptionButton = %NewFolderPolicyOption
 @onready
 var _ask_dialog: ConfirmationDialog = %AskDialog
+@onready
+var _ignored_globs_edit: LineEdit = %LineEdit
 
 
 func _ready() -> void:
@@ -48,13 +52,14 @@ func _ready() -> void:
 	_ask_dialog.canceled.connect(_on_ask_dialog_canceled)
 	_rule_editor.rules_changed.connect(_on_rule_editor_rules_changed)
 	_rule_editor.rule_delete_requested.connect(_on_remove_rule_pressed)
+	_rule_editor.preview_refresh_needed.connect(_preset_preview.refresh)
 
 	_rules_tree.set_column_title(0, 'Name')
 	_rules_tree.set_column_title(1, 'Status')
 	_rules_tree.set_column_titles_visible(true)
 	_rules_tree.set_column_expand(0, true)
 	_rules_tree.set_column_expand(1, false)
-	_rules_tree.set_column_custom_minimum_width(1, 140)
+	_rules_tree.set_column_custom_minimum_width(1, 240)
 	_rules_tree.item_edited.connect(_on_tree_item_edited)
 
 	_new_folder_policy_option.clear()
@@ -62,11 +67,16 @@ func _ready() -> void:
 	_new_folder_policy_option.add_item('Auto Exclude', ExportRulesConfig.NewFolderPolicy.AUTO_EXCLUDE)
 	_new_folder_policy_option.add_item('Ask', ExportRulesConfig.NewFolderPolicy.ASK)
 
+	_ignored_globs_edit.text_submitted.connect(_on_ignored_globs_changed)
+	_ignored_globs_edit.focus_exited.connect(func() -> void: _on_ignored_globs_changed(_ignored_globs_edit.text))
+	%GlobRefreshButton.pressed.connect(_on_scan_pressed)
+
 
 func setup(config: Resource, plugin: EditorPlugin) -> void:
 	_config = config
 	_plugin = plugin
 	_new_folder_policy_option.selected = _config.new_folder_policy
+	_ignored_globs_edit.text = ', '.join(_config.ignored_globs)
 	_snapshot_known_folders()
 	refresh_file_tree()
 
@@ -221,7 +231,9 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 			item.set_custom_bg_color(0, inherited_bg)
 			item.set_custom_bg_color(1, inherited_bg)
 
-		if disabled:
+		if _is_glob_ignored(f):
+			_apply_glob_ignored_style(item)
+		elif disabled:
 			_apply_disabled_style(item)
 		else:
 			item.set_editable(0, true)
@@ -231,6 +243,16 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 				subtree_has_rules = true
 
 	return subtree_has_rules
+
+
+func _apply_glob_ignored_style(item: TreeItem) -> void:
+	item.set_selectable(0, false)
+	item.set_selectable(1, false)
+	item.set_indeterminate(0, false)
+	item.set_checked(0, false)
+	item.set_custom_color(0, Color(0.5, 0.5, 0.5))
+	item.set_text(1, 'Ignored by filter glob')
+	item.set_custom_color(1, Color(0.7, 0.5, 0.2))
 
 
 func _apply_disabled_style(item: TreeItem) -> void:
@@ -493,6 +515,25 @@ func _on_ask_dialog_confirmed() -> void:
 		refresh_file_tree()
 		_set_status('Excluded new folder: ' + _pending_new_path)
 	_pending_new_path = ''
+
+
+func _is_glob_ignored(filename: String) -> bool:
+	for pattern in _config.ignored_globs:
+		if filename.match(pattern):
+			return true
+	return false
+
+
+func _on_ignored_globs_changed(text: String) -> void:
+	if not _config:
+		return
+	_config.ignored_globs.clear()
+	for part in text.split(','):
+		var trimmed := part.strip_edges()
+		if not trimmed.is_empty():
+			_config.ignored_globs.append(trimmed)
+	_config.save()
+	refresh_file_tree()
 
 
 func _on_ask_dialog_canceled() -> void:
