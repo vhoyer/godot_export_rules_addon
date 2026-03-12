@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Export Rules Addon"
 config/features=PackedStringArray("4.6")
-config/icon="res://icon.svg"
+config/icon="uid://cyihooh2l3pak"
 
 [editor_plugins]
 
