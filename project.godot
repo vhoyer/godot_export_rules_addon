@@ -22,10 +22,16 @@ enabled=PackedStringArray("res://addons/export_rules/plugin.cfg", "res://addons/
 
 folder_colors={
 "res://addons/": "gray",
+"res://assets/": "pink",
 "res://stages/": "yellow"
 }
+
+[gui]
+
+theme/custom="uid://4t1e2lgt3wqk"
 
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.16078432, 0.16078432, 0.16078432, 1)
