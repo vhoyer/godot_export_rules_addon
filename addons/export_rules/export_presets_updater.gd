@@ -32,9 +32,9 @@ func _apply_rules(config: Resource, cfg: ConfigFile) -> void:
 		if not _is_preset_section(section):
 			continue
 		var tags:= _get_preset_tags(cfg, section)
-		var excluded_files:= _compute_excluded_files(config, tags)
-		cfg.set_value(section, 'export_filter', 'exclude')
-		cfg.set_value(section, 'export_files', PackedStringArray(excluded_files))
+		var included_files:= _compute_included_files(config, tags)
+		cfg.set_value(section, 'export_filter', 'resources')
+		cfg.set_value(section, 'export_files', PackedStringArray(included_files))
 
 
 func _is_preset_section(section: String) -> bool:
@@ -54,34 +54,18 @@ func _get_preset_tags(cfg: ConfigFile, section: String) -> Array[String]:
 	return tags
 
 
-## Compute the list of files to exclude for a preset with the given tags.
-## - Rules with empty required_tags → always excluded
-## - Rules with required_tags → excluded if preset is missing any of those tags
-func _compute_excluded_files(config: Resource, preset_tags: Array[String]) -> Array[String]:
+## Compute the list of files to include for a preset with the given tags.
+## Walks all project files from res://, including each file if:
+##   - no rule covers it (always included), or
+##   - the matching rule's should_include_for_tags() returns true.
+func _compute_included_files(config: Resource, preset_tags: Array[String]) -> Array[String]:
 	var result: Array[String] = []
-	for rule in config.rules:
-		if not rule.should_include_for_tags(preset_tags):
-			var expanded:= _expand_path(rule.path)
-			for file_path in expanded:
-				if not result.has(file_path):
-					result.append(file_path)
+	_collect_included_recursive('res://', config.rules, preset_tags, result)
 	result.sort()
 	return result
 
 
-## Expand a res:// path to a flat list of all files within it.
-## If it's a file, returns [path]. If a folder, recurses.
-func _expand_path(res_path: String) -> Array[String]:
-	var result: Array[String] = []
-	var local_path:= ProjectSettings.globalize_path(res_path)
-	if DirAccess.dir_exists_absolute(local_path):
-		_collect_files_recursive(res_path, result)
-	elif FileAccess.file_exists(res_path):
-		result.append(res_path)
-	return result
-
-
-func _collect_files_recursive(dir_res_path: String, result: Array[String]) -> void:
+func _collect_included_recursive(dir_res_path: String, rules: Array, preset_tags: Array[String], result: Array[String]) -> void:
 	var dir:= DirAccess.open(dir_res_path)
 	if not dir:
 		return
@@ -89,13 +73,27 @@ func _collect_files_recursive(dir_res_path: String, result: Array[String]) -> vo
 	var entry_name:= dir.get_next()
 	while entry_name != '':
 		if not entry_name.begins_with('.'):
-			var full_res_path:= dir_res_path + '/' + entry_name
-			if dir.current_is_dir():
-				_collect_files_recursive(full_res_path, result)
+			var full_res_path: String
+			if dir_res_path.ends_with('/'):
+				full_res_path = dir_res_path + entry_name
 			else:
-				result.append(full_res_path)
+				full_res_path = dir_res_path + '/' + entry_name
+			if dir.current_is_dir():
+				_collect_included_recursive(full_res_path, rules, preset_tags, result)
+			else:
+				var rule = _find_matching_rule(full_res_path, rules)
+				if rule == null or rule.should_include_for_tags(preset_tags):
+					result.append(full_res_path)
 		entry_name = dir.get_next()
 	dir.list_dir_end()
+
+
+func _find_matching_rule(file_path: String, rules: Array):
+	for rule in rules:
+		var rule_path:= rule.path.rstrip('/') as String
+		if file_path == rule_path or file_path.begins_with(rule_path + '/'):
+			return rule
+	return null
 
 
 ## Parse a PackedStringArray(...) line value into an Array of strings.

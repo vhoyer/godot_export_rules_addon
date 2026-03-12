@@ -31,29 +31,29 @@ func before_each() -> void:
 	updater._apply_rules(config, cfg)
 
 
-func _excluded(section: String) -> PackedStringArray:
+func _export_files(section: String) -> PackedStringArray:
 	return cfg.get_value(section, 'export_files', PackedStringArray())
 
 
 # --- windows_demo preset (tag: "demo") ---
 
 func test_level_demo_included_in_demo_preset() -> void:
-	assert_false(
-		_excluded(PRESET_DEMO).has(SCENE_DEMO),
+	assert_true(
+		_export_files(PRESET_DEMO).has(SCENE_DEMO),
 		'level_demo should be included in the demo preset'
 	)
 
 
 func test_level_full_excluded_from_demo_preset() -> void:
-	assert_true(
-		_excluded(PRESET_DEMO).has(SCENE_FULL),
+	assert_false(
+		_export_files(PRESET_DEMO).has(SCENE_FULL),
 		'level_full should be excluded from the demo preset'
 	)
 
 
 func test_main_menu_included_in_demo_preset() -> void:
-	assert_false(
-		_excluded(PRESET_DEMO).has(SCENE_MENU),
+	assert_true(
+		_export_files(PRESET_DEMO).has(SCENE_MENU),
 		'main_menu has no rule and should be included in the demo preset'
 	)
 
@@ -61,21 +61,21 @@ func test_main_menu_included_in_demo_preset() -> void:
 # --- windows_full preset (tag: "full") ---
 
 func test_level_full_included_in_full_preset() -> void:
-	assert_false(
-		_excluded(PRESET_FULL).has(SCENE_FULL),
+	assert_true(
+		_export_files(PRESET_FULL).has(SCENE_FULL),
 		'level_full should be included in the full preset'
 	)
 
 
 func test_level_demo_excluded_from_full_preset() -> void:
-	assert_true(
-		_excluded(PRESET_FULL).has(SCENE_DEMO),
+	assert_false(
+		_export_files(PRESET_FULL).has(SCENE_DEMO),
 		'level_demo should be excluded from the full preset'
 	)
 
 
 func test_main_menu_included_in_full_preset() -> void:
-	assert_false(
-		_excluded(PRESET_FULL).has(SCENE_MENU),
+	assert_true(
+		_export_files(PRESET_FULL).has(SCENE_MENU),
 		'main_menu has no rule and should be included in the full preset'
 	)
