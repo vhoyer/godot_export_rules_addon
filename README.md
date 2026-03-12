@@ -1,34 +1,75 @@
-# Export Rules Addon
+# Export Rules — Godot Addon
 
-A Godot 4.6 editor plugin that manages game export configurations using feature tags. Define which files or folders are included in each export preset — no more manual editing of `export_presets.cfg`.
+Tired of manually tweaking `export_presets.cfg` every time you need a demo build, a full version, or a platform-specific release? **Export Rules** lets you define once which files/folder belong to which build — and keeps your presets in sync automatically.
 
-## How it works
+## The Problem
 
-Each rule maps a path (file or folder) to a set of **required tags**. When you apply rules, the plugin computes the exclusion list for each export preset based on the tags defined in that preset's `custom_features` field.
+Managing multiple export variants in Godot means editing `export_presets.cfg` by hand. One preset for the demo, another for the full game, maybe one for Steam and one for itch.io — each with a different set of files. It's tedious, error-prone, and easy to forget a file.
 
-- **Empty tags** → path is always excluded from all presets
-- **Tags set** → path is included only in presets that have all those tags
+## The Solution
 
-The plugin reads tag lists from `export_presets.cfg`'s `custom_features` field (comma-separated), then sets the preset's `export_filter` to `"exclude"` with the computed file list.
+Export Rules gives you a visual editor where you tag each folder or file with the presets it belongs to. Hit **Update Export Presets** and the plugin computes the right file list for every preset automatically.
+
+![Export Rules Panel screenshot](./assets/export_rules_panel_screenshot.png)
+
+## How It Works
+
+Every rule maps a path to a set of **required tags**:
+
+- **No tags** → always excluded from all exports (perfect for test folders, dev tools, etc.)
+- **Tags set** → included only in presets that declare all those tags
+
+Tags come from each preset's **Custom Features** field (comma-separated). The plugin reads those, applies your rules, and writes the correct `export_files` list to each preset.
+
+### Example
+
+You have two export presets:
+- `Demo` with `custom_features = "demo"`
+- `Full` with `custom_features = "full"`
+
+Your rules:
+
+| Path | Required Tags | Effect |
+|------|--------------|--------|
+| `res://test/` | *(none)* | Excluded from every preset |
+| `res://stages/level_demo/` | `demo` | Only in Demo preset |
+| `res://stages/level_full/` | `full` | Only in Full preset |
+| `res://stages/level_shared/` | `demo, full` | In both presets |
+
+Everything else is included by default.
+
+![example setup](./assets/example_setup.png)
 
 ## Installation
 
 1. Copy the `addons/export_rules/` folder into your project's `addons/` directory.
-2. In the Godot editor, go to **Project Settings → Plugins** and enable **Export Rules**.
-3. An **Export Rules** tab will appear in the editor's main screen.
-4. Configuration is saved to `export_rules.json` in your project root.
+2. In Godot: **Project → Project Settings → Plugins** → enable **Export Rules**.
+3. An **Export Rules** tab appears in the main editor screen.
 
 ## Usage
 
-1. Click **Add Folder** or **Add File** to create a new rule.
-2. In the rule editor, add required tags (e.g. `demo`, `full`, `steam`).
-3. Optionally add a comment to describe the rule.
-4. The preview shows which export presets will include or exclude the path.
-5. Click **Update** to apply all rules to `export_presets.cfg`.
+1. Open the **Export Rules** tab.
+2. Click **Add Folder** or **Add File** to create a rule.
+3. Assign required tags to the rule (e.g. `demo`, `full`, `steam`).
+4. Optionally add a comment to describe what the rule does.
+5. The preview on the right shows which presets will include or exclude the path.
+6. Click **Update Export Presets** to apply everything to `export_presets.cfg`.
+
+That's it. Your presets are now managed by rules instead of by hand.
+
+## New Folder Policy
+
+When the plugin detects a new folder in your project, it can handle it automatically. Configure this in the panel settings:
+
+| Policy | Behavior |
+|--------|----------|
+| **Auto Include** | New folders are added to known paths and included in all presets |
+| **Auto Exclude** | New folders are added as a rule with no tags (excluded everywhere) |
+| **Ask** | The plugin prompts you to decide for each new folder |
 
 ## Configuration
 
-Rules are stored in `export_rules.json`:
+Rules are stored in `export_rules.json` at your project root — commit it alongside your project.
 
 ```json
 {
@@ -42,7 +83,7 @@ Rules are stored in `export_rules.json`:
     {
       "path": "res://stages/level_demo",
       "required_tags": ["demo"],
-      "comment": "Demo level only"
+      "comment": "Demo build only"
     },
     {
       "path": "res://stages/level_full",
@@ -53,16 +94,7 @@ Rules are stored in `export_rules.json`:
 }
 ```
 
-### New folder policy
-
-When the plugin detects a new folder in your project, it can:
-
-| Value | Behavior |
-|-------|----------|
-| `0` — Auto Include | Automatically add to rules (included in all presets) |
-| `1` — Auto Exclude | Automatically add to rules (excluded from all presets) |
-| `2` — Ask | Prompt you for each new folder |
-
 ## Requirements
 
-- Godot 4.6+
+- Godot 4.x
+- No external dependencies — pure GDScript
