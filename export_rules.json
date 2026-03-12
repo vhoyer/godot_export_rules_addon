@@ -41,9 +41,11 @@
 		"res://entities/only_non_resources/",
 		"res://addons/export_rules/export_rules_panel/rule_editor/tag_chip/",
 		"res://addons/export_rules/export_rules_panel/rule_editor/preset_preview/",
-		"res://addons/export_rules/export_rules_panel/preset_preview/"
+		"res://addons/export_rules/export_rules_panel/preset_preview/",
+		"res://entities/ignored folder/",
+		"res://entities/ask folder/"
 	],
-	"new_folder_policy": 1,
+	"new_folder_policy": 0,
 	"rules": [
 		{
 			"comment": "",
@@ -103,6 +105,13 @@
 			"comment": "",
 			"path": "res://entities/ignored folder",
 			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://entities/folder_with_non_resource",
+			"required_tags": [
+				"s"
+			]
 		}
 	]
 }

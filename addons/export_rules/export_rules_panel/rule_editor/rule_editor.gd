@@ -17,16 +17,16 @@ var _selected_rule: Resource
 @onready var _tags_flow: HFlowContainer = %TagsFlow
 @onready var _new_tag_edit: LineEdit = %NewTagEdit
 @onready var _comment_edit: LineEdit = %CommentEdit
-@onready var _add_rule_button: Button = %AddRuleButton
-@onready var _delete_button: Button = %DeleteButton
+@onready var _always_exclude_button: Button = %AlwaysExcludeButton
+@onready var _always_include_button: Button = %AlwaysIncludeButton
 
 
 func _ready() -> void:
 	%AddTagButton.pressed.connect(func() -> void: _on_add_tag(_new_tag_edit.text))
 	_new_tag_edit.text_submitted.connect(_on_add_tag)
 	_comment_edit.text_changed.connect(_on_comment_changed)
-	_add_rule_button.pressed.connect(_on_add_rule_pressed)
-	_delete_button.pressed.connect(func() -> void: rule_delete_requested.emit())
+	_always_exclude_button.pressed.connect(_on_always_exclude_pressed)
+	_always_include_button.pressed.connect(func() -> void: rule_delete_requested.emit())
 
 	show_placeholder()
 
@@ -55,10 +55,11 @@ func _refresh_ui() -> void:
 	_comment_edit.text = _selected_rule.comment if _selected_rule else ''
 	_comment_edit.text_changed.connect(_on_comment_changed)
 
-	_add_rule_button.disabled = _selected_rule != null
-	_add_rule_button.tooltip_text = 'A rule already exists for this path' if _selected_rule else ''
-	_delete_button.disabled = _selected_rule == null
-	_delete_button.tooltip_text = 'No rule exists for this path yet' if not _selected_rule else ''
+	var already_excluded: bool = _selected_rule != null and _selected_rule.required_tags.is_empty()
+	_always_exclude_button.disabled = already_excluded
+	_always_exclude_button.tooltip_text = 'Path is already always excluded' if already_excluded else ''
+	_always_include_button.disabled = _selected_rule == null
+	_always_include_button.tooltip_text = 'No rule exists for this path yet' if not _selected_rule else ''
 
 	_refresh_tags_display()
 	preview_refresh_needed.emit(_selected_rule)
@@ -70,8 +71,7 @@ func _refresh_tags_display() -> void:
 
 	if not _selected_rule or _selected_rule.required_tags.is_empty():
 		var empty_label := Label.new()
-		empty_label.text = '(none — always excluded)'
-		empty_label.modulate = Color(1, 0.4, 0.4)
+		empty_label.text = '(empty)'
 		_tags_flow.add_child(empty_label)
 		return
 
@@ -99,8 +99,10 @@ func _ensure_rule_exists() -> Resource:
 	return _selected_rule
 
 
-func _on_add_rule_pressed() -> void:
+func _on_always_exclude_pressed() -> void:
 	_ensure_rule_exists()
+	_selected_rule.required_tags.clear()
+	_config.save()
 	_refresh_ui()
 	rules_changed.emit()
 
@@ -109,15 +111,11 @@ func _on_add_tag(tag: String) -> void:
 	tag = tag.strip_edges()
 	if tag.is_empty() or _selected_path.is_empty():
 		return
-	var newly_created := _selected_rule == null
 	_ensure_rule_exists()
 	if not _selected_rule.required_tags.has(tag):
 		_selected_rule.required_tags.append(tag)
 		_config.save()
-		_refresh_tags_display()
-		preview_refresh_needed.emit(_selected_rule)
-		if newly_created:
-			_refresh_ui()
+		_refresh_ui()
 		rules_changed.emit()
 	_new_tag_edit.clear()
 

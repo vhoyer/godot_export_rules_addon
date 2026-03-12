@@ -40,7 +40,6 @@ vertical_alignment = 1
 
 [node name="EditorContent" type="VBoxContainer" parent="." unique_id=1122109774]
 unique_name_in_owner = true
-visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
@@ -57,27 +56,19 @@ size_flags_horizontal = 3
 text = "Path: res://entities/"
 autowrap_mode = 3
 
+[node name="CommentLabel" type="Label" parent="EditorContent" unique_id=1299842160]
+layout_mode = 2
+text = "Comment:"
+
+[node name="CommentEdit" type="LineEdit" parent="EditorContent" unique_id=951778379]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Optional description"
+
 [node name="TagsTitle" type="Label" parent="EditorContent" unique_id=1672384080]
 layout_mode = 2
 text = "Required Feature Tags:"
-
-[node name="PanelContainer" type="PanelContainer" parent="EditorContent" unique_id=472779782]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_pittw")
-
-[node name="TagsHint" type="Label" parent="EditorContent/PanelContainer" unique_id=658015127]
-modulate = Color(1, 1, 1, 0.6)
-custom_minimum_size = Vector2(50, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Path is included only in presets that have ALL of these tags. Leave empty to always exclude from all presets."
-autowrap_mode = 3
-
-[node name="TagsFlow" type="HFlowContainer" parent="EditorContent" unique_id=2009927774]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-size_flags_horizontal = 3
 
 [node name="AddTagRow" type="HBoxContainer" parent="EditorContent" unique_id=2141923567]
 layout_mode = 2
@@ -91,29 +82,37 @@ placeholder_text = "Tag name (e.g. steam, demo)"
 [node name="AddTagButton" type="Button" parent="EditorContent/AddTagRow" unique_id=1750005269]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Add Tag"
+text = "Require Tag"
 
-[node name="CommentLabel" type="Label" parent="EditorContent" unique_id=1299842160]
-layout_mode = 2
-text = "Comment:"
-
-[node name="CommentEdit" type="LineEdit" parent="EditorContent" unique_id=951778379]
+[node name="TagsFlow" type="HFlowContainer" parent="EditorContent" unique_id=2009927774]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "Optional description"
+
+[node name="TagsHint" type="PanelContainer" parent="EditorContent" unique_id=472779782]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pittw")
+
+[node name="TagsHintLabel" type="Label" parent="EditorContent/TagsHint" unique_id=658015127]
+modulate = Color(1, 1, 1, 0.6)
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Path is included only in presets that have ALL of tags listed above. Leave empty to always exclude from all presets."
+autowrap_mode = 3
 
 [node name="RuleActions" type="HBoxContainer" parent="EditorContent" unique_id=1367360832]
 layout_mode = 2
 
-[node name="AddRuleButton" type="Button" parent="EditorContent/RuleActions" unique_id=1029003801]
+[node name="AlwaysIncludeButton" type="Button" parent="EditorContent/RuleActions" unique_id=469492704]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Add Rule"
+text = "Always Include"
 
-[node name="DeleteButton" type="Button" parent="EditorContent/RuleActions" unique_id=469492704]
+[node name="AlwaysExcludeButton" type="Button" parent="EditorContent/RuleActions" unique_id=1029003801]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "Delete Rule"
+text = "Always Exclude"
