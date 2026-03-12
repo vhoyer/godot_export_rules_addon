@@ -27,6 +27,11 @@ func add_rule(target_path: String) -> Resource:
 	var existing:= get_rule_for_path(target_path)
 	if existing:
 		return existing
+	# Remove any child rules — the parent now governs the whole subtree
+	var prefix := target_path + '/'
+	for i in range(rules.size() - 1, -1, -1):
+		if (rules[i].path as String).begins_with(prefix):
+			rules.remove_at(i)
 	var rule:= PathRule.new()
 	rule.path = target_path
 	rules.append(rule)

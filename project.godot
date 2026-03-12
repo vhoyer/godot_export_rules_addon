@@ -23,6 +23,15 @@ enabled=PackedStringArray("res://addons/export_rules/plugin.cfg", "res://addons/
 folder_colors={
 "res://addons/": "gray",
 "res://assets/": "pink",
+"res://colors/0red/": "red",
+"res://colors/1orange/": "orange",
+"res://colors/3yellow/": "yellow",
+"res://colors/4green/": "green",
+"res://colors/5teal/": "teal",
+"res://colors/6blue/": "blue",
+"res://colors/7purple/": "purple",
+"res://colors/8pink/": "pink",
+"res://colors/9gray/": "gray",
 "res://stages/": "yellow"
 }
 

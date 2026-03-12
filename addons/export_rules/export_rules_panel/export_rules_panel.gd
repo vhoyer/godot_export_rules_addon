@@ -11,6 +11,20 @@ var _selected_rule: Resource  # PathRule or null
 var _selected_path: String = ''
 var _pending_new_path: String = ''
 var _known_folders_cache: Array[String] = []
+var _folder_colors: Dictionary = {}  # res://path/ -> color name, from project.godot
+
+@export_group('Folder Colors')
+@export var color_red: Color     = Color(0.8784314, 0.23921569, 0.23921569, 1)
+@export var color_orange: Color  = Color(0.8784314, 0.49411765, 0.23921569, 1)
+@export var color_yellow: Color  = Color(0.8784314, 0.78039217, 0.23921569, 1)
+@export var color_green: Color   = Color(0.4392157, 0.8784314, 0.23921569, 1)
+@export var color_teal: Color    = Color(0.23921569, 0.8784314, 0.5568628, 1)
+@export var color_blue: Color    = Color(0.23921569, 0.7411765, 0.8784314, 1)
+@export var color_purple: Color  = Color(0.4392157, 0.23921569, 0.8784314, 1)
+@export var color_pink: Color    = Color(0.8784314, 0.23921569, 0.5176471, 1)
+@export var color_gray: Color    = Color(0.5411765, 0.5411765, 0.5411765, 1)
+@export var color_default: Color = Color(0, 0, 0, 0)
+@export_group('')
 
 @onready
 var _rules_tree: Tree = %RulesTree
@@ -41,7 +55,7 @@ func _ready() -> void:
 	_rule_editor.rules_changed.connect(_on_rule_editor_rules_changed)
 	_rule_editor.rule_delete_requested.connect(_on_remove_rule_pressed)
 
-	_rules_tree.set_column_title(0, 'Path')
+	_rules_tree.set_column_title(0, 'Name')
 	_rules_tree.set_column_title(1, 'Required Tags')
 	_rules_tree.set_column_title(2, 'Status')
 	_rules_tree.set_column_titles_visible(true)
@@ -49,6 +63,7 @@ func _ready() -> void:
 	_rules_tree.set_column_expand(1, true)
 	_rules_tree.set_column_expand(2, false)
 	_rules_tree.set_column_custom_minimum_width(2, 140)
+	_rules_tree.item_edited.connect(_on_tree_item_edited)
 
 	_new_folder_policy_option.clear()
 	_new_folder_policy_option.add_item('Auto Include', ExportRulesConfig.NewFolderPolicy.AUTO_INCLUDE)
@@ -72,46 +87,159 @@ func _on_rule_editor_rules_changed() -> void:
 func refresh_file_tree() -> void:
 	if not _rules_tree or not _config:
 		return
+	_folder_colors = ProjectSettings.get_setting('file_customization/folder_colors', {}) as Dictionary
 	_rules_tree.clear()
-	var root:= _rules_tree.create_item()
-	var folder_items: Dictionary = {}
-	var sorted_rules: Array = _config.rules.duplicate()
-	sorted_rules.sort_custom(func(a: Resource, b: Resource) -> bool:
-		return _natural_less_than(a.path, b.path)
+	var root := _rules_tree.create_item()
+	var fs_root := EditorInterface.get_resource_filesystem().get_filesystem()
+	if fs_root:
+		_build_tree_from_filesystem(fs_root, root)
+	if not _selected_path.is_empty():
+		var item := _find_tree_item_by_path(_selected_path)
+		if item:
+			item.select(0)
+
+
+## Recursively builds the tree using Godot's EditorFileSystem, matching exactly
+## what the FileSystem dock shows. disabled=true means a parent has a rule.
+## inherited_bg is the background colour passed down from the nearest ancestor
+## folder that has a colour defined in file_customization/folder_colors.
+## Returns true if any rule exists in this subtree (used for collapse logic).
+func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item: TreeItem, disabled: bool = false, inherited_bg: Color = Color.TRANSPARENT) -> bool:
+	var subdirs: Array = []
+	for i in range(fs_dir.get_subdir_count()):
+		subdirs.append(fs_dir.get_subdir(i))
+	subdirs.sort_custom(func(a: EditorFileSystemDirectory, b: EditorFileSystemDirectory) -> bool:
+		return _natural_less_than(a.get_path(), b.get_path())
 	)
-	for rule in sorted_rules:
-		var short_path: String = rule.path.trim_prefix('res://')
-		var segments: PackedStringArray = short_path.split('/')
-		var parent: TreeItem = root
-		var accumulated: String = ''
-		for segment_index in range(segments.size() - 1):
-			var segment: String = segments[segment_index]
-			accumulated += ('' if accumulated.is_empty() else '/') + segment
-			if not folder_items.has(accumulated):
-				var folder_item: TreeItem = _rules_tree.create_item(parent)
-				folder_item.set_text(0, segment + '/')
-				folder_item.set_collapsed(false)
-				folder_item.set_metadata(0, 'res://' + accumulated)
-				folder_items[accumulated] = folder_item
-			parent = folder_items[accumulated] as TreeItem
-		var item: TreeItem
-		if folder_items.has(short_path):
-			item = folder_items[short_path] as TreeItem
+
+	var files: Array[String] = []
+	for i in range(fs_dir.get_file_count()):
+		files.append(fs_dir.get_file(i))
+	files.sort_custom(func(a: String, b: String) -> bool: return _natural_less_than(a, b))
+
+	var subtree_has_rules := false
+
+	for subdir: EditorFileSystemDirectory in subdirs:
+		var res_path := subdir.get_path().trim_suffix('/')
+		var rule := _config.get_rule_for_path(res_path)
+		var is_excluded: bool = not disabled and rule != null and rule.required_tags.is_empty()
+		var dir_name := res_path.get_file()
+
+		# Own colour overrides inherited; otherwise pass the inherited colour down.
+		var own_key := res_path + '/'
+		var effective_bg := inherited_bg
+		if _folder_colors.has(own_key):
+			effective_bg = Color(_folder_color_from_name(_folder_colors[own_key] as String), 0.15)
+
+		var item := _rules_tree.create_item(parent_item)
+		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		item.set_text(0, dir_name + '/')
+		item.set_metadata(0, res_path)
+		item.set_tooltip_text(0, res_path)
+		if effective_bg.a > 0:
+			item.set_custom_bg_color(0, effective_bg)
+			item.set_custom_bg_color(1, effective_bg)
+			item.set_custom_bg_color(2, effective_bg)
+
+		if disabled:
+			_apply_disabled_style(item)
 		else:
-			var last_segment: String = segments[segments.size() - 1]
-			var is_dir: bool = _is_directory_path(rule.path)
-			item = _rules_tree.create_item(parent)
-			item.set_text(0, last_segment + ('/' if is_dir else ''))
-			folder_items[short_path] = item
-		item.set_tooltip_text(0, rule.path)
-		item.set_text(1, ', '.join(rule.required_tags) if not rule.required_tags.is_empty() else '(none)')
-		item.set_text(2, rule.get_status_label())
-		if rule.required_tags.is_empty():
-			item.set_custom_color(2, Color(1, 0.4, 0.4))
+			item.set_editable(0, true)
+			_set_rule_columns(item, rule)
+
+		var self_has_rule := not disabled and rule != null
+		subtree_has_rules = subtree_has_rules or self_has_rule
+
+		var child_has_rules := false
+		if not is_excluded:
+			child_has_rules = _build_tree_from_filesystem(subdir, item, disabled or self_has_rule, Color(effective_bg, effective_bg.a * 0.7))
+			if not disabled:
+				subtree_has_rules = subtree_has_rules or child_has_rules
+
+		if not disabled:
+			if rule == null:
+				item.set_indeterminate(0, child_has_rules)
+				if not child_has_rules:
+					item.set_checked(0, true)
+			elif rule.required_tags.is_empty():
+				item.set_indeterminate(0, false)
+				item.set_checked(0, false)
+			else:
+				item.set_indeterminate(0, true)
+
+		item.set_collapsed(disabled or self_has_rule or not child_has_rules)
+
+	for f in files:
+		var res_path := fs_dir.get_path() + f
+		var rule := _config.get_rule_for_path(res_path)
+
+		var item := _rules_tree.create_item(parent_item)
+		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
+		item.set_text(0, f)
+		item.set_metadata(0, res_path)
+		item.set_tooltip_text(0, res_path)
+		if inherited_bg.a > 0:
+			item.set_custom_bg_color(0, inherited_bg)
+			item.set_custom_bg_color(1, inherited_bg)
+			item.set_custom_bg_color(2, inherited_bg)
+
+		if disabled:
+			_apply_disabled_style(item)
 		else:
-			item.set_custom_color(2, Color(0.4, 1, 0.4))
-		item.set_metadata(0, rule.path)
-	_rules_tree.set_column_expand(0, true)
+			item.set_editable(0, true)
+			_set_checkbox_state(item, rule)
+			_set_rule_columns(item, rule)
+			if rule:
+				subtree_has_rules = true
+
+	return subtree_has_rules
+
+
+func _apply_disabled_style(item: TreeItem) -> void:
+	item.set_selectable(0, false)
+	item.set_selectable(1, false)
+	item.set_selectable(2, false)
+	item.set_indeterminate(0, true)
+	item.set_custom_color(0, Color(0.5, 0.5, 0.5))
+
+
+func _set_checkbox_state(item: TreeItem, rule: Resource) -> void:
+	if rule == null:
+		item.set_indeterminate(0, false)
+		item.set_checked(0, true)
+	elif rule.required_tags.is_empty():
+		item.set_indeterminate(0, false)
+		item.set_checked(0, false)
+	else:
+		item.set_indeterminate(0, true)
+
+
+func _set_rule_columns(item: TreeItem, rule: Resource) -> void:
+	if rule == null:
+		item.set_text(1, '')
+		item.set_text(2, 'Always Included')
+		item.set_custom_color(2, Color(0.6, 0.6, 0.6))
+		return
+	item.set_text(1, ', '.join(rule.required_tags) if not rule.required_tags.is_empty() else '(none)')
+	item.set_text(2, rule.get_status_label())
+	if rule.required_tags.is_empty():
+		item.set_custom_color(2, Color(1, 0.4, 0.4))
+	else:
+		item.set_custom_color(2, Color(0.4, 1, 0.4))
+
+
+func _folder_color_from_name(color_name: String) -> Color:
+	match color_name:
+		'red':    return color_red
+		'orange': return color_orange
+		'yellow': return color_yellow
+		'green':  return color_green
+		'teal':   return color_teal
+		'blue':   return color_blue
+		'purple': return color_purple
+		'pink':   return color_pink
+		'gray':   return color_gray
+	return color_default
 
 
 ## Natural sort comparator — numbers in paths are sorted numerically.
@@ -141,10 +269,6 @@ static func _natural_less_than(a: String, b: String) -> bool:
 			i += 1
 			j += 1
 	return a.length() < b.length()
-
-
-func _is_directory_path(path: String) -> bool:
-	return DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path))
 
 
 func _snapshot_known_folders() -> void:
@@ -225,21 +349,6 @@ func update_export_presets() -> void:
 func _set_status(message: String) -> void:
 	if _status_label:
 		_status_label.text = message
-
-
-func _find_next_path_after_removal(removed_path: String) -> String:
-	var sorted: Array = _config.rules.duplicate()
-	sorted.sort_custom(func(a: Resource, b: Resource) -> bool:
-		return _natural_less_than(a.path, b.path)
-	)
-	for i in range(sorted.size()):
-		if sorted[i].path == removed_path:
-			if i + 1 < sorted.size():
-				return sorted[i + 1].path as String
-			elif i - 1 >= 0:
-				return sorted[i - 1].path as String
-			return ''
-	return ''
 
 
 func _find_tree_item_by_path(path: String) -> TreeItem:
@@ -330,20 +439,43 @@ func _on_remove_rule_pressed() -> void:
 	if _selected_path.is_empty() or not _selected_rule:
 		return
 	var removed_path: String = _selected_path
-	var next_path: String = _find_next_path_after_removal(removed_path)
 	_config.remove_rule(removed_path)
 	_selected_rule = null
-	_selected_path = ''
+	# Keep _selected_path so the item stays selected after refresh
 	refresh_file_tree()
-	if not next_path.is_empty():
-		var next_item: TreeItem = _find_tree_item_by_path(next_path)
-		if next_item:
-			next_item.select(0)
-			_on_rule_selected()
-			_set_status('Rule removed for: ' + removed_path)
-			return
-	_rule_editor.show_placeholder()
 	_set_status('Rule removed for: ' + removed_path)
+
+
+## Called when the user clicks a checkbox cell. We revert the toggle (the checkbox
+## is read-only — clicking it opens the rule editor instead of toggling state).
+func _on_tree_item_edited() -> void:
+	var item := _rules_tree.get_edited()
+	if not item:
+		return
+	var path := item.get_metadata(0) as String
+	var rule := _config.get_rule_for_path(path)
+	# Revert the checkbox to its correct visual state
+	if rule == null:
+		var children_have_rules := _tree_item_children_have_rules(item)
+		item.set_indeterminate(0, children_have_rules)
+		if not children_have_rules:
+			item.set_checked(0, true)
+	else:
+		_set_checkbox_state(item, rule)
+	_selected_path = path
+	_selected_rule = rule
+	_rule_editor.load_rule(_config, path, rule)
+
+
+func _tree_item_children_have_rules(item: TreeItem) -> bool:
+	var child := item.get_first_child()
+	while child:
+		if _config.get_rule_for_path(child.get_metadata(0) as String) != null:
+			return true
+		if _tree_item_children_have_rules(child):
+			return true
+		child = child.get_next()
+	return false
 
 
 func _on_ask_dialog_confirmed() -> void:

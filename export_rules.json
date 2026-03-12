@@ -13,18 +13,32 @@
 		"res://addons/export_rules/rule_editor/",
 		"res://addons/export_rules/export_rules_panel/",
 		"res://addons/export_rules/export_rules_panel/rule_editor/",
-		"res://addons/export_rules/assets/"
+		"res://addons/export_rules/assets/",
+		"res://colors/",
+		"res://colors/red/",
+		"res://colors/orange/",
+		"res://colors/yellow/",
+		"res://colors/green/",
+		"res://colors/teal/",
+		"res://colors/blue/",
+		"res://colors/purple/",
+		"res://colors/pink/",
+		"res://colors/gray/",
+		"res://colors/0red/",
+		"res://colors/1orange/",
+		"res://colors/3yellow/",
+		"res://colors/4green/",
+		"res://colors/5teal/",
+		"res://colors/6blue/",
+		"res://colors/7purple/",
+		"res://colors/8pink/",
+		"res://colors/9gray/"
 	],
 	"new_folder_policy": 0,
 	"rules": [
 		{
 			"comment": "",
 			"path": "res://test",
-			"required_tags": []
-		},
-		{
-			"comment": "",
-			"path": "res://addons/gut",
 			"required_tags": []
 		},
 		{
@@ -40,6 +54,11 @@
 			"required_tags": [
 				"full"
 			]
+		},
+		{
+			"comment": "",
+			"path": "res://addons/gut",
+			"required_tags": []
 		}
 	]
 }
