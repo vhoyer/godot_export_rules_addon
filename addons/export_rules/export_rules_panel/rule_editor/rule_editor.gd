@@ -1,6 +1,8 @@
 @tool
 extends VBoxContainer
 
+const TagChip = preload("res://addons/export_rules/export_rules_panel/rule_editor/tag_chip/tag_chip.tscn")
+
 signal rules_changed
 signal rule_delete_requested
 
@@ -80,25 +82,17 @@ func _refresh_tags_display() -> void:
 		return
 
 	for tag in _selected_rule.required_tags:
-		var tag_container := HBoxContainer.new()
-		_tags_flow.add_child(tag_container)
-
-		var tag_label := Label.new()
-		tag_label.text = tag
-		tag_container.add_child(tag_label)
-
-		var remove_btn := Button.new()
-		remove_btn.text = 'x'
-		remove_btn.custom_minimum_size = Vector2(24, 0)
+		var chip: Control = TagChip.instantiate()
+		_tags_flow.add_child(chip)
+		chip.setup(tag)
 		var tag_copy: String = tag
-		remove_btn.pressed.connect(func() -> void:
+		chip.remove_requested.connect(func() -> void:
 			_selected_rule.required_tags.erase(tag_copy)
 			_config.save()
 			_refresh_tags_display()
 			_refresh_preset_preview()
 			rules_changed.emit()
 		)
-		tag_container.add_child(remove_btn)
 
 
 func _refresh_preset_preview() -> void:

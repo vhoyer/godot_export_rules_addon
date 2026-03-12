@@ -12,6 +12,7 @@ var _selected_path: String = ''
 var _pending_new_path: String = ''
 var _known_folders_cache: Array[String] = []
 var _folder_colors: Dictionary = {}  # res://path/ -> color name, from project.godot
+var _expanded_paths: Dictionary = {}  # res://path -> bool (true = expanded)
 
 @export_group('Folder Colors')
 @export var color_red: Color     = Color(0.8784314, 0.23921569, 0.23921569, 1)
@@ -35,34 +36,25 @@ var _status_label: Label = %StatusLabel
 @onready
 var _new_folder_policy_option: OptionButton = %NewFolderPolicyOption
 @onready
-var _file_dialog: EditorFileDialog = %FileDialog
-@onready
 var _ask_dialog: ConfirmationDialog = %AskDialog
 
 
 func _ready() -> void:
 	%UpdateButton.pressed.connect(_on_update_pressed)
 	%ScanButton.pressed.connect(_on_scan_pressed)
-	%AddFolderButton.pressed.connect(_on_add_folder_pressed)
-	%AddFileButton.pressed.connect(_on_add_file_pressed)
-	%RemoveButton.pressed.connect(_on_remove_rule_pressed)
 	_rules_tree.item_selected.connect(_on_rule_selected)
 	_new_folder_policy_option.item_selected.connect(_on_policy_changed)
-	_file_dialog.file_selected.connect(_on_file_dialog_selected)
-	_file_dialog.dir_selected.connect(_on_file_dialog_selected)
 	_ask_dialog.confirmed.connect(_on_ask_dialog_confirmed)
 	_ask_dialog.canceled.connect(_on_ask_dialog_canceled)
 	_rule_editor.rules_changed.connect(_on_rule_editor_rules_changed)
 	_rule_editor.rule_delete_requested.connect(_on_remove_rule_pressed)
 
 	_rules_tree.set_column_title(0, 'Name')
-	_rules_tree.set_column_title(1, 'Required Tags')
-	_rules_tree.set_column_title(2, 'Status')
+	_rules_tree.set_column_title(1, 'Status')
 	_rules_tree.set_column_titles_visible(true)
 	_rules_tree.set_column_expand(0, true)
-	_rules_tree.set_column_expand(1, true)
-	_rules_tree.set_column_expand(2, false)
-	_rules_tree.set_column_custom_minimum_width(2, 140)
+	_rules_tree.set_column_expand(1, false)
+	_rules_tree.set_column_custom_minimum_width(1, 140)
 	_rules_tree.item_edited.connect(_on_tree_item_edited)
 
 	_new_folder_policy_option.clear()
@@ -87,43 +79,91 @@ func _on_rule_editor_rules_changed() -> void:
 func refresh_file_tree() -> void:
 	if not _rules_tree or not _config:
 		return
+	_snapshot_expanded_state()
 	_folder_colors = ProjectSettings.get_setting('file_customization/folder_colors', {}) as Dictionary
 	_rules_tree.clear()
 	var root := _rules_tree.create_item()
-	var fs_root := EditorInterface.get_resource_filesystem().get_filesystem()
-	if fs_root:
-		_build_tree_from_filesystem(fs_root, root)
+	_build_tree_from_filesystem('res://', root)
+	_apply_expanded_state()
 	if not _selected_path.is_empty():
 		var item := _find_tree_item_by_path(_selected_path)
 		if item:
 			item.select(0)
 
 
-## Recursively builds the tree using Godot's EditorFileSystem, matching exactly
-## what the FileSystem dock shows. disabled=true means a parent has a rule.
+func _snapshot_expanded_state() -> void:
+	var root := _rules_tree.get_root()
+	if not root:
+		return
+	var item := root.get_first_child()
+	while item:
+		_snapshot_expanded_recursive(item)
+		item = item.get_next()
+
+
+func _snapshot_expanded_recursive(item: TreeItem) -> void:
+	var path := item.get_metadata(0) as String
+	if not path.is_empty():
+		_expanded_paths[path] = not item.is_collapsed()
+	var child := item.get_first_child()
+	while child:
+		_snapshot_expanded_recursive(child)
+		child = child.get_next()
+
+
+func _apply_expanded_state() -> void:
+	var root := _rules_tree.get_root()
+	if not root:
+		return
+	var item := root.get_first_child()
+	while item:
+		_apply_expanded_recursive(item)
+		item = item.get_next()
+
+
+func _apply_expanded_recursive(item: TreeItem) -> void:
+	var path := item.get_metadata(0) as String
+	if not path.is_empty() and _expanded_paths.has(path):
+		item.set_collapsed(not _expanded_paths[path])
+	var child := item.get_first_child()
+	while child:
+		_apply_expanded_recursive(child)
+		child = child.get_next()
+
+
+## Recursively builds the tree from the actual project filesystem.
+## disabled=true means a parent folder has a rule and governs this subtree.
 ## inherited_bg is the background colour passed down from the nearest ancestor
 ## folder that has a colour defined in file_customization/folder_colors.
 ## Returns true if any rule exists in this subtree (used for collapse logic).
-func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item: TreeItem, disabled: bool = false, inherited_bg: Color = Color.TRANSPARENT) -> bool:
-	var subdirs: Array = []
-	for i in range(fs_dir.get_subdir_count()):
-		subdirs.append(fs_dir.get_subdir(i))
-	subdirs.sort_custom(func(a: EditorFileSystemDirectory, b: EditorFileSystemDirectory) -> bool:
-		return _natural_less_than(a.get_path(), b.get_path())
-	)
+func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabled: bool = false, inherited_bg: Color = Color.TRANSPARENT) -> bool:
+	var dir := DirAccess.open(dir_path)
+	if not dir:
+		return false
 
+	var subdirs: Array[String] = []
 	var files: Array[String] = []
-	for i in range(fs_dir.get_file_count()):
-		files.append(fs_dir.get_file(i))
+
+	dir.list_dir_begin()
+	var entry := dir.get_next()
+	while entry != '':
+		if not entry.begins_with('.'):
+			if dir.current_is_dir():
+				subdirs.append(entry)
+			elif not entry.ends_with('.import') and not entry.ends_with('.uid'):
+				files.append(entry)
+		entry = dir.get_next()
+	dir.list_dir_end()
+
+	subdirs.sort_custom(func(a: String, b: String) -> bool: return _natural_less_than(a, b))
 	files.sort_custom(func(a: String, b: String) -> bool: return _natural_less_than(a, b))
 
 	var subtree_has_rules := false
 
-	for subdir: EditorFileSystemDirectory in subdirs:
-		var res_path := subdir.get_path().trim_suffix('/')
+	for d in subdirs:
+		var res_path := dir_path + d
 		var rule := _config.get_rule_for_path(res_path)
 		var is_excluded: bool = not disabled and rule != null and rule.required_tags.is_empty()
-		var dir_name := res_path.get_file()
 
 		# Own colour overrides inherited; otherwise pass the inherited colour down.
 		var own_key := res_path + '/'
@@ -133,13 +173,12 @@ func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item:
 
 		var item := _rules_tree.create_item(parent_item)
 		item.set_cell_mode(0, TreeItem.CELL_MODE_CHECK)
-		item.set_text(0, dir_name + '/')
+		item.set_text(0, d + '/')
 		item.set_metadata(0, res_path)
 		item.set_tooltip_text(0, res_path)
 		if effective_bg.a > 0:
 			item.set_custom_bg_color(0, effective_bg)
 			item.set_custom_bg_color(1, effective_bg)
-			item.set_custom_bg_color(2, effective_bg)
 
 		if disabled:
 			_apply_disabled_style(item)
@@ -152,7 +191,7 @@ func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item:
 
 		var child_has_rules := false
 		if not is_excluded:
-			child_has_rules = _build_tree_from_filesystem(subdir, item, disabled or self_has_rule, Color(effective_bg, effective_bg.a * 0.7))
+			child_has_rules = _build_tree_from_filesystem(dir_path + d + '/', item, disabled or self_has_rule, Color(effective_bg, effective_bg.a * 0.7))
 			if not disabled:
 				subtree_has_rules = subtree_has_rules or child_has_rules
 
@@ -170,7 +209,7 @@ func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item:
 		item.set_collapsed(disabled or self_has_rule or not child_has_rules)
 
 	for f in files:
-		var res_path := fs_dir.get_path() + f
+		var res_path := dir_path + f
 		var rule := _config.get_rule_for_path(res_path)
 
 		var item := _rules_tree.create_item(parent_item)
@@ -181,7 +220,6 @@ func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item:
 		if inherited_bg.a > 0:
 			item.set_custom_bg_color(0, inherited_bg)
 			item.set_custom_bg_color(1, inherited_bg)
-			item.set_custom_bg_color(2, inherited_bg)
 
 		if disabled:
 			_apply_disabled_style(item)
@@ -198,7 +236,6 @@ func _build_tree_from_filesystem(fs_dir: EditorFileSystemDirectory, parent_item:
 func _apply_disabled_style(item: TreeItem) -> void:
 	item.set_selectable(0, false)
 	item.set_selectable(1, false)
-	item.set_selectable(2, false)
 	item.set_indeterminate(0, true)
 	item.set_custom_color(0, Color(0.5, 0.5, 0.5))
 
@@ -216,16 +253,14 @@ func _set_checkbox_state(item: TreeItem, rule: Resource) -> void:
 
 func _set_rule_columns(item: TreeItem, rule: Resource) -> void:
 	if rule == null:
-		item.set_text(1, '')
-		item.set_text(2, 'Always Included')
-		item.set_custom_color(2, Color(0.6, 0.6, 0.6))
+		item.set_text(1, 'Always Included')
+		item.set_custom_color(1, Color(0.6, 0.6, 0.6))
 		return
-	item.set_text(1, ', '.join(rule.required_tags) if not rule.required_tags.is_empty() else '(none)')
-	item.set_text(2, rule.get_status_label())
+	item.set_text(1, rule.get_status_label())
 	if rule.required_tags.is_empty():
-		item.set_custom_color(2, Color(1, 0.4, 0.4))
+		item.set_custom_color(1, Color(1, 0.4, 0.4))
 	else:
-		item.set_custom_color(2, Color(0.4, 1, 0.4))
+		item.set_custom_color(1, Color(0.4, 1, 0.4))
 
 
 func _folder_color_from_name(color_name: String) -> Color:
@@ -377,8 +412,7 @@ func _on_update_pressed() -> void:
 
 
 func _on_scan_pressed() -> void:
-	check_for_new_folders()
-	_set_status('Scan complete.')
+	refresh_file_tree()
 
 
 func _on_policy_changed(index: int) -> void:
@@ -398,32 +432,6 @@ func _on_rule_selected() -> void:
 	_selected_path = selected.get_metadata(0) as String
 	_selected_rule = _config.get_rule_for_path(_selected_path)
 	_rule_editor.load_rule(_config, _selected_path, _selected_rule)
-
-
-func _on_add_folder_pressed() -> void:
-	_file_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_DIR
-	_file_dialog.title = 'Select Folder to Add Rule For'
-	_file_dialog.popup_centered(Vector2i(800, 600))
-
-
-func _on_add_file_pressed() -> void:
-	_file_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_FILE
-	_file_dialog.title = 'Select File to Add Rule For'
-	_file_dialog.popup_centered(Vector2i(800, 600))
-
-
-func _on_file_dialog_selected(selected_path: String) -> void:
-	if selected_path.is_empty():
-		return
-	var project_path:= ProjectSettings.globalize_path('res://')
-	if selected_path.begins_with(project_path):
-		selected_path = 'res://' + selected_path.trim_prefix(project_path)
-	if not selected_path.begins_with('res://'):
-		_set_status('Error: path must be inside the project directory.')
-		return
-	_config.add_rule(selected_path)
-	refresh_file_tree()
-	_set_status('Rule added for: ' + selected_path)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:

@@ -73,3 +73,8 @@ func _on_filesystem_changed() -> void:
 	if _panel:
 		(_panel as ExportRulesPanel).check_for_new_folders()
 		(_panel as ExportRulesPanel).refresh_file_tree()
+
+
+func _project_settings_changed() -> void:
+	if _panel:
+		(_panel as ExportRulesPanel).refresh_file_tree()

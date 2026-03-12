@@ -32,9 +32,12 @@ func _apply_rules(config: Resource, cfg: ConfigFile) -> void:
 		if not _is_preset_section(section):
 			continue
 		var tags:= _get_preset_tags(cfg, section)
-		var included_files:= _compute_included_files(config, tags)
+		var resource_files: Array[String] = []
+		var non_resource_files: Array[String] = []
+		_compute_included_files(config, tags, resource_files, non_resource_files)
 		cfg.set_value(section, 'export_filter', 'resources')
-		cfg.set_value(section, 'export_files', PackedStringArray(included_files))
+		cfg.set_value(section, 'export_files', PackedStringArray(resource_files))
+		cfg.set_value(section, 'include_filter', ','.join(non_resource_files))
 
 
 func _is_preset_section(section: String) -> bool:
@@ -54,18 +57,15 @@ func _get_preset_tags(cfg: ConfigFile, section: String) -> Array[String]:
 	return tags
 
 
-## Compute the list of files to include for a preset with the given tags.
-## Walks all project files from res://, including each file if:
-##   - no rule covers it (always included), or
-##   - the matching rule's should_include_for_tags() returns true.
-func _compute_included_files(config: Resource, preset_tags: Array[String]) -> Array[String]:
-	var result: Array[String] = []
-	_collect_included_recursive('res://', config.rules, preset_tags, result)
-	result.sort()
-	return result
+## Walks all project files and populates resource_files (for export_files=) and
+## non_resource_files (for include_filter=) based on rules and preset tags.
+func _compute_included_files(config: Resource, preset_tags: Array[String], resource_files: Array[String], non_resource_files: Array[String]) -> void:
+	_collect_included_recursive('res://', config.rules, preset_tags, resource_files, non_resource_files)
+	resource_files.sort()
+	non_resource_files.sort()
 
 
-func _collect_included_recursive(dir_res_path: String, rules: Array, preset_tags: Array[String], result: Array[String]) -> void:
+func _collect_included_recursive(dir_res_path: String, rules: Array, preset_tags: Array[String], resource_files: Array[String], non_resource_files: Array[String]) -> void:
 	var dir:= DirAccess.open(dir_res_path)
 	if not dir:
 		return
@@ -80,21 +80,20 @@ func _collect_included_recursive(dir_res_path: String, rules: Array, preset_tags
 				full_res_path = dir_res_path + '/' + entry_name
 			if dir.current_is_dir():
 				if not _is_ignored_dir(full_res_path):
-					_collect_included_recursive(full_res_path, rules, preset_tags, result)
-			elif _is_godot_resource(full_res_path):
+					_collect_included_recursive(full_res_path, rules, preset_tags, resource_files, non_resource_files)
+			elif not entry_name.ends_with('.import') and not entry_name.ends_with('.uid'):
 				var rule = _find_matching_rule(full_res_path, rules)
 				if rule == null or rule.should_include_for_tags(preset_tags):
-					result.append(full_res_path)
+					if ResourceLoader.exists(full_res_path):
+						resource_files.append(full_res_path)
+					else:
+						non_resource_files.append(full_res_path.trim_prefix('res://'))
 		entry_name = dir.get_next()
 	dir.list_dir_end()
 
 
 func _is_ignored_dir(dir_res_path: String) -> bool:
 	return FileAccess.file_exists(dir_res_path + '/.gdignore')
-
-
-func _is_godot_resource(file_path: String) -> bool:
-	return ResourceLoader.exists(file_path)
 
 
 func _find_matching_rule(file_path: String, rules: Array):

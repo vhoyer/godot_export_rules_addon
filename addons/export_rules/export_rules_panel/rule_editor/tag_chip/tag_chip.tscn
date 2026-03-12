@@ -1,0 +1,63 @@
+[gd_scene format=3 uid="uid://dtagchip00001"]
+
+[ext_resource type="Script" uid="uid://duajy6y1rpvf3" path="res://addons/export_rules/export_rules_panel/rule_editor/tag_chip/tag_chip.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dlivp57g7xn4a" path="res://addons/export_rules/assets/x-solid.svg" id="2_bi8yx"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2efx1"]
+bg_color = Color(0.09019608, 0.09019608, 0.09019608, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bi8yx"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.2576, 0.2576, 0.2576, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.28175, 0.28175, 0.28175, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+corner_detail = 4
+
+[node name="TagChip" type="PanelContainer" unique_id=2107184615]
+offset_right = 56.0
+offset_bottom = 32.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_2efx1")
+script = ExtResource("1_script")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1955634722]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+theme_override_constants/separation = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="HBoxContainer" unique_id=1828646292]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_right = 6
+
+[node name="TagLabel" type="Label" parent="HBoxContainer/MarginContainer" unique_id=100000001]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Full"
+
+[node name="RemoveButton" type="Button" parent="HBoxContainer" unique_id=100000002]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxFlat_bi8yx")
+icon = ExtResource("2_bi8yx")
+icon_alignment = 1

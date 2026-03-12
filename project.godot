@@ -32,6 +32,7 @@ folder_colors={
 "res://colors/7purple/": "purple",
 "res://colors/8pink/": "pink",
 "res://colors/9gray/": "gray",
+"res://entities/": "green",
 "res://stages/": "yellow"
 }
 

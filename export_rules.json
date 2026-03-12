@@ -32,15 +32,14 @@
 		"res://colors/6blue/",
 		"res://colors/7purple/",
 		"res://colors/8pink/",
-		"res://colors/9gray/"
+		"res://colors/9gray/",
+		"res://entities/",
+		"res://entities/folder_with_non_resource/",
+		"res://entities/only_non_resources/",
+		"res://addons/export_rules/export_rules_panel/rule_editor/tag_chip/"
 	],
 	"new_folder_policy": 0,
 	"rules": [
-		{
-			"comment": "",
-			"path": "res://test",
-			"required_tags": []
-		},
 		{
 			"comment": "",
 			"path": "res://stages/level_demo",
@@ -58,6 +57,16 @@
 		{
 			"comment": "",
 			"path": "res://addons/gut",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://.gutconfig.json",
+			"required_tags": []
+		},
+		{
+			"comment": "",
+			"path": "res://test",
 			"required_tags": []
 		}
 	]
