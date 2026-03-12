@@ -12,16 +12,10 @@ var _selected_path: String = ''
 var _pending_new_path: String = ''
 var _known_folders_cache: Array[String] = []
 
-# Dynamic editor nodes — rebuilt on each selection change
-var _editor_path_label: Label
-var _tags_flow: HFlowContainer
-var _new_tag_edit: LineEdit
-var _preset_preview_tree: Tree
-
 @onready
 var _rules_tree: Tree = %RulesTree
 @onready
-var _editor_container: VBoxContainer = %EditorContainer
+var _rule_editor = %RuleEditor
 @onready
 var _status_label: Label = %StatusLabel
 @onready
@@ -45,6 +39,8 @@ func _ready() -> void:
 	_file_dialog.dir_selected.connect(_on_file_dialog_selected)
 	_ask_dialog.confirmed.connect(_on_ask_dialog_confirmed)
 	_ask_dialog.canceled.connect(_on_ask_dialog_canceled)
+	_rule_editor.rules_changed.connect(_on_rule_editor_rules_changed)
+	_rule_editor.rule_delete_requested.connect(_on_remove_rule_pressed)
 
 	_rules_tree.set_column_title(0, 'Path')
 	_rules_tree.set_column_title(1, 'Required Tags')
@@ -60,8 +56,6 @@ func _ready() -> void:
 	_new_folder_policy_option.add_item('Auto Exclude', ExportRulesConfig.NewFolderPolicy.AUTO_EXCLUDE)
 	_new_folder_policy_option.add_item('Ask', ExportRulesConfig.NewFolderPolicy.ASK)
 
-	_build_editor_placeholder()
-
 
 func setup(config: Resource, plugin: EditorPlugin) -> void:
 	_config = config
@@ -69,162 +63,11 @@ func setup(config: Resource, plugin: EditorPlugin) -> void:
 	_new_folder_policy_option.selected = _config.new_folder_policy
 	_snapshot_known_folders()
 	refresh_file_tree()
-	_refresh_preset_preview()
 
 
-func _build_editor_placeholder() -> void:
-	_clear_editor()
-	var placeholder:= Label.new()
-	placeholder.text = 'Select a rule to edit it.'
-	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	placeholder.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_editor_container.add_child(placeholder)
-
-
-func _build_rule_editor(path: String, rule: Resource) -> void:
-	_clear_editor()
-
-	_editor_path_label = Label.new()
-	var display_path: String = path + ('/' if _is_directory_path(path) else '')
-	_editor_path_label.text = 'Path: ' + display_path
-	_editor_path_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_editor_container.add_child(_editor_path_label)
-
-	var tags_title:= Label.new()
-	tags_title.text = 'Required Feature Tags:'
-	_editor_container.add_child(tags_title)
-
-	var tags_hint:= Label.new()
-	tags_hint.text = 'Path is included only in presets that have ALL of these tags.\nLeave empty to always exclude from all presets.'
-	tags_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tags_hint.modulate = Color(1, 1, 1, 0.6)
-	_editor_container.add_child(tags_hint)
-
-	_tags_flow = HFlowContainer.new()
-	_tags_flow.custom_minimum_size.y = 40
-	_editor_container.add_child(_tags_flow)
-	_refresh_tags_display(rule)
-
-	var add_tag_row:= HBoxContainer.new()
-	_editor_container.add_child(add_tag_row)
-
-	_new_tag_edit = LineEdit.new()
-	_new_tag_edit.placeholder_text = 'Tag name (e.g. steam, demo)'
-	_new_tag_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_new_tag_edit.text_submitted.connect(_on_add_tag)
-	add_tag_row.add_child(_new_tag_edit)
-
-	var add_tag_btn:= Button.new()
-	add_tag_btn.text = 'Add Tag'
-	add_tag_btn.pressed.connect(func() -> void: _on_add_tag(_new_tag_edit.text))
-	add_tag_row.add_child(add_tag_btn)
-
-	var sep2:= HSeparator.new()
-	_editor_container.add_child(sep2)
-
-	var comment_label:= Label.new()
-	comment_label.text = 'Comment:'
-	_editor_container.add_child(comment_label)
-
-	var comment_edit:= LineEdit.new()
-	comment_edit.text = rule.comment if rule else ''
-	comment_edit.placeholder_text = 'Optional description'
-	comment_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	comment_edit.text_changed.connect(func(text: String) -> void:
-		var target_rule: Resource = _ensure_rule_exists()
-		target_rule.comment = text
-		_config.save()
-	)
-	_editor_container.add_child(comment_edit)
-
-	var sep3:= HSeparator.new()
-	_editor_container.add_child(sep3)
-
-	var preview_label:= Label.new()
-	preview_label.text = 'Export Preset Preview:'
-	_editor_container.add_child(preview_label)
-
-	_preset_preview_tree = Tree.new()
-	_preset_preview_tree.hide_root = true
-	_preset_preview_tree.columns = 2
-	_preset_preview_tree.set_column_title(0, 'Preset')
-	_preset_preview_tree.set_column_title(1, 'Result')
-	_preset_preview_tree.set_column_titles_visible(true)
-	_preset_preview_tree.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_preset_preview_tree.custom_minimum_size.y = 120
-	_editor_container.add_child(_preset_preview_tree)
-
-	_refresh_preset_preview_for_rule(rule)
-
-	var sep_bottom:= HSeparator.new()
-	_editor_container.add_child(sep_bottom)
-
-	var rule_actions:= HBoxContainer.new()
-	_editor_container.add_child(rule_actions)
-
-	var add_rule_button:= Button.new()
-	add_rule_button.text = 'Add Rule'
-	add_rule_button.pressed.connect(func() -> void:
-		_ensure_rule_exists()
-		_build_rule_editor(_selected_path, _selected_rule)
-	)
-	if _selected_rule:
-		add_rule_button.disabled = true
-		add_rule_button.tooltip_text = 'A rule already exists for this path'
-	rule_actions.add_child(add_rule_button)
-
-	var delete_button:= Button.new()
-	delete_button.text = 'Delete Rule'
-	delete_button.pressed.connect(_on_remove_rule_pressed)
-	if not _selected_rule:
-		delete_button.disabled = true
-		delete_button.tooltip_text = 'No rule exists for this path yet'
-	rule_actions.add_child(delete_button)
-
-
-func _ensure_rule_exists() -> Resource:
-	if not _selected_rule:
-		_selected_rule = _config.add_rule(_selected_path)
-		refresh_file_tree()
-	return _selected_rule
-
-
-func _clear_editor() -> void:
-	for child in _editor_container.get_children():
-		child.queue_free()
-
-
-func _refresh_tags_display(rule: Resource) -> void:
-	for child in _tags_flow.get_children():
-		child.queue_free()
-
-	if not rule or rule.required_tags.is_empty():
-		var empty_label:= Label.new()
-		empty_label.text = '(none — always excluded)'
-		empty_label.modulate = Color(1, 0.4, 0.4)
-		_tags_flow.add_child(empty_label)
-		return
-
-	for tag in rule.required_tags:
-		var tag_container:= HBoxContainer.new()
-		_tags_flow.add_child(tag_container)
-
-		var tag_label:= Label.new()
-		tag_label.text = tag
-		tag_container.add_child(tag_label)
-
-		var remove_btn:= Button.new()
-		remove_btn.text = 'x'
-		remove_btn.custom_minimum_size = Vector2(24, 0)
-		var tag_copy: String = tag
-		remove_btn.pressed.connect(func() -> void:
-			rule.required_tags.erase(tag_copy)
-			_config.save()
-			_refresh_tags_display(rule)
-			refresh_file_tree()
-			_refresh_preset_preview_for_rule(rule)
-		)
-		tag_container.add_child(remove_btn)
+func _on_rule_editor_rules_changed() -> void:
+	_selected_rule = _config.get_rule_for_path(_selected_path)
+	refresh_file_tree()
 
 
 func refresh_file_tree() -> void:
@@ -272,11 +115,6 @@ func refresh_file_tree() -> void:
 	_rules_tree.set_column_expand(0, true)
 
 
-func _refresh_preset_preview() -> void:
-	if _selected_rule and is_instance_valid(_preset_preview_tree):
-		_refresh_preset_preview_for_rule(_selected_rule)
-
-
 ## Natural sort comparator — numbers in paths are sorted numerically.
 ## E.g. "factory9" sorts before "factory10".
 static func _natural_less_than(a: String, b: String) -> bool:
@@ -308,63 +146,6 @@ static func _natural_less_than(a: String, b: String) -> bool:
 
 func _is_directory_path(path: String) -> bool:
 	return DirAccess.dir_exists_absolute(ProjectSettings.globalize_path(path))
-
-
-func _refresh_preset_preview_for_rule(rule: Resource) -> void:
-	if not _preset_preview_tree or not rule:
-		return
-	_preset_preview_tree.clear()
-	var root:= _preset_preview_tree.create_item()
-	root.set_text(0, 'Presets')
-	var presets:= _read_presets_summary()
-	for preset_info in presets:
-		var item:= _preset_preview_tree.create_item(root)
-		item.set_text(0, preset_info['name'] as String)
-		var tags:= preset_info['tags'] as Array[String]
-		var included: bool = rule.should_include_for_tags(tags)
-		if included:
-			item.set_text(1, 'Included')
-			item.set_custom_color(1, Color(0.4, 1, 0.4))
-		else:
-			item.set_text(1, 'Excluded')
-			item.set_custom_color(1, Color(1, 0.4, 0.4))
-
-
-func _read_presets_summary() -> Array:
-	var result: Array = []
-	if not FileAccess.file_exists('res://export_presets.cfg'):
-		return result
-	var file:= FileAccess.open('res://export_presets.cfg', FileAccess.READ)
-	if not file:
-		return result
-	var lines:= file.get_as_text().split('\n')
-	file.close()
-	var current_name: String = ''
-	var current_tags: Array[String] = []
-	var in_preset: bool = false
-	for line in lines:
-		var trimmed:= line.strip_edges()
-		if trimmed.begins_with('[preset.') and not trimmed.contains('.options'):
-			if in_preset and not current_name.is_empty():
-				result.append({'name': current_name, 'tags': current_tags})
-			current_name = ''
-			current_tags = []
-			in_preset = true
-		elif trimmed.begins_with('['):
-			in_preset = false
-		elif in_preset and trimmed.begins_with('name='):
-			current_name = trimmed.trim_prefix('name=').trim_prefix('"').trim_suffix('"')
-		elif in_preset and trimmed.begins_with('custom_features='):
-			var raw:= trimmed.trim_prefix('custom_features=').trim_prefix('"').trim_suffix('"')
-			current_tags = []
-			if not raw.is_empty():
-				for tag in raw.split(','):
-					var cleaned:= tag.strip_edges()
-					if not cleaned.is_empty():
-						current_tags.append(cleaned)
-	if in_preset and not current_name.is_empty():
-		result.append({'name': current_name, 'tags': current_tags})
-	return result
 
 
 func _snapshot_known_folders() -> void:
@@ -508,11 +289,11 @@ func _on_rule_selected() -> void:
 	if not selected:
 		_selected_rule = null
 		_selected_path = ''
-		_build_editor_placeholder()
+		_rule_editor.show_placeholder()
 		return
 	_selected_path = selected.get_metadata(0) as String
 	_selected_rule = _config.get_rule_for_path(_selected_path)
-	_build_rule_editor(_selected_path, _selected_rule)
+	_rule_editor.load_rule(_config, _selected_path, _selected_rule)
 
 
 func _on_add_folder_pressed() -> void:
@@ -566,23 +347,8 @@ func _on_remove_rule_pressed() -> void:
 			_on_rule_selected()
 			_set_status('Rule removed for: ' + removed_path)
 			return
-	_build_editor_placeholder()
+	_rule_editor.show_placeholder()
 	_set_status('Rule removed for: ' + removed_path)
-
-
-func _on_add_tag(tag: String) -> void:
-	tag = tag.strip_edges()
-	if tag.is_empty() or _selected_path.is_empty():
-		return
-	var rule: Resource = _ensure_rule_exists()
-	if not rule.required_tags.has(tag):
-		rule.required_tags.append(tag)
-		_config.save()
-		_refresh_tags_display(rule)
-		refresh_file_tree()
-		_refresh_preset_preview_for_rule(rule)
-	if _new_tag_edit:
-		_new_tag_edit.clear()
 
 
 func _on_ask_dialog_confirmed() -> void:

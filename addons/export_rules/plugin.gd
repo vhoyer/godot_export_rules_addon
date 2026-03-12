@@ -1,8 +1,8 @@
 @tool
 extends EditorPlugin
 
-const ExportRulesPanel = preload('res://addons/export_rules/export_rules_panel.gd')
-const ExportRulesPanelScene = preload('res://addons/export_rules/export_rules_panel.tscn')
+const ExportRulesPanel = preload('res://addons/export_rules/export_rules_panel/export_rules_panel.gd')
+const ExportRulesPanelScene = preload('res://addons/export_rules/export_rules_panel/export_rules_panel.tscn')
 const ExportPresetsUpdater = preload('res://addons/export_rules/export_presets_updater.gd')
 const ExportRulesConfig = preload('res://addons/export_rules/export_rules_config.gd')
 
@@ -16,13 +16,13 @@ func _enter_tree() -> void:
 		_config.load_from_json()
 
 	_panel = ExportRulesPanelScene.instantiate()
-	self.get_editor_interface().get_editor_main_screen().add_child(_panel)
+	EditorInterface.get_editor_main_screen().add_child(_panel)
 	_make_visible(false)
 	(_panel as ExportRulesPanel).setup(_config, self)
 
 	_update_export_presets()
 
-	var filesystem:= self.get_editor_interface().get_resource_filesystem()
+	var filesystem:= EditorInterface.get_resource_filesystem()
 	filesystem.filesystem_changed.connect(_on_filesystem_changed)
 
 
@@ -31,7 +31,7 @@ func _exit_tree() -> void:
 		_panel.queue_free()
 		_panel = null
 
-	var filesystem:= self.get_editor_interface().get_resource_filesystem()
+	var filesystem:= EditorInterface.get_resource_filesystem()
 	if filesystem.filesystem_changed.is_connected(_on_filesystem_changed):
 		filesystem.filesystem_changed.disconnect(_on_filesystem_changed)
 
@@ -50,7 +50,7 @@ func _get_plugin_name() -> String:
 
 
 func _get_plugin_icon() -> Texture2D:
-	return load('res://addons/export_rules/icon.svg') as Texture2D
+	return load('res://addons/export_rules/assets/icon.svg') as Texture2D
 
 
 func _build() -> bool:

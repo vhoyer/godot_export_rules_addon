@@ -8,7 +8,12 @@
 		"res://stages/stage_demo/",
 		"res://stages/level_full/",
 		"res://stages/level_demo/",
-		"res://test/e2e/"
+		"res://test/e2e/",
+		"res://assets/",
+		"res://addons/export_rules/rule_editor/",
+		"res://addons/export_rules/export_rules_panel/",
+		"res://addons/export_rules/export_rules_panel/rule_editor/",
+		"res://addons/export_rules/assets/"
 	],
 	"new_folder_policy": 0,
 	"rules": [

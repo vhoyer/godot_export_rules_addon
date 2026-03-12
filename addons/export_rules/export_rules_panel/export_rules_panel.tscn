@@ -1,0 +1,148 @@
+[gd_scene format=3 uid="uid://chm161vqw5db"]
+
+[ext_resource type="Theme" uid="uid://5dwtht7s2b1c" path="res://addons/export_rules/assets/export_rules_theme.tres" id="1_jukm1"]
+[ext_resource type="Script" uid="uid://bfyo4bd22y84s" path="res://addons/export_rules/export_rules_panel/export_rules_panel.gd" id="1_panel"]
+[ext_resource type="PackedScene" uid="uid://druleedit0001" path="res://addons/export_rules/export_rules_panel/rule_editor/rule_editor.tscn" id="2_editor"]
+
+[node name="ExportRulesPanel" type="VBoxContainer" unique_id=1896645729]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_jukm1")
+script = ExtResource("1_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="." unique_id=263682279]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Inner" type="VBoxContainer" parent="MarginContainer" unique_id=256334274]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Toolbar" type="HBoxContainer" parent="MarginContainer/Inner" unique_id=1598442659]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Inner/Toolbar" unique_id=572971339]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HFlowContainer" type="HFlowContainer" parent="MarginContainer/Inner/Toolbar/VBoxContainer" unique_id=369826615]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UpdateButton" type="Button" parent="MarginContainer/Inner/Toolbar/VBoxContainer/HFlowContainer" unique_id=1676004086]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Update Export Presets"
+
+[node name="ScanButton" type="Button" parent="MarginContainer/Inner/Toolbar/VBoxContainer/HFlowContainer" unique_id=1476372320]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Scan for New Folders"
+
+[node name="ImportButton" type="Button" parent="MarginContainer/Inner/Toolbar/VBoxContainer/HFlowContainer" unique_id=303224611]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Import from Current Presets"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/Inner/Toolbar/VBoxContainer" unique_id=1819245451]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HBoxContainer" type="VBoxContainer" parent="MarginContainer/Inner/Toolbar" unique_id=1402612529]
+layout_mode = 2
+size_flags_vertical = 0
+alignment = 2
+
+[node name="PolicyLabel" type="Label" parent="MarginContainer/Inner/Toolbar/HBoxContainer" unique_id=1156579945]
+layout_mode = 2
+text = "New folder policy:"
+
+[node name="NewFolderPolicyOption" type="OptionButton" parent="MarginContainer/Inner/Toolbar/HBoxContainer" unique_id=2026574848]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+selected = 0
+item_count = 3
+popup/item_0/text = "Auto Include"
+popup/item_0/id = 0
+popup/item_1/text = "Auto Exclude"
+popup/item_1/id = 1
+popup/item_2/text = "Ask"
+popup/item_2/id = 2
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/Inner" unique_id=458305021]
+layout_mode = 2
+
+[node name="Split" type="HSplitContainer" parent="MarginContainer/Inner" unique_id=27773166]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+split_offsets = PackedInt32Array(500)
+split_offset = 500
+
+[node name="LeftPanel" type="VBoxContainer" parent="MarginContainer/Inner/Split" unique_id=1687875422]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PathRulesLabel" type="Label" parent="MarginContainer/Inner/Split/LeftPanel" unique_id=210840692]
+layout_mode = 2
+text = "Path Rules"
+
+[node name="RulesTree" type="Tree" parent="MarginContainer/Inner/Split/LeftPanel" unique_id=608821690]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+columns = 3
+column_titles_visible = true
+hide_root = true
+
+[node name="ListActions" type="HFlowContainer" parent="MarginContainer/Inner/Split/LeftPanel" unique_id=1529833087]
+layout_mode = 2
+
+[node name="AddFolderButton" type="Button" parent="MarginContainer/Inner/Split/LeftPanel/ListActions" unique_id=318025125]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Folder Rule"
+
+[node name="AddFileButton" type="Button" parent="MarginContainer/Inner/Split/LeftPanel/ListActions" unique_id=1677115542]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add File Rule"
+
+[node name="RemoveButton" type="Button" parent="MarginContainer/Inner/Split/LeftPanel/ListActions" unique_id=496169727]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Remove Rule"
+
+[node name="RightPanel" type="VBoxContainer" parent="MarginContainer/Inner/Split" unique_id=356303332]
+layout_mode = 2
+
+[node name="RuleEditorLabel" type="Label" parent="MarginContainer/Inner/Split/RightPanel" unique_id=2136848092]
+layout_mode = 2
+text = "Rule Editor"
+
+[node name="RuleEditorSeparator" type="HSeparator" parent="MarginContainer/Inner/Split/RightPanel" unique_id=1353418696]
+layout_mode = 2
+
+[node name="RuleEditor" parent="MarginContainer/Inner/Split/RightPanel" unique_id=2061547395 instance=ExtResource("2_editor")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FileDialog" type="EditorFileDialog" parent="." unique_id=957719949]
+unique_name_in_owner = true
+
+[node name="AskDialog" type="ConfirmationDialog" parent="." unique_id=1181491516]
+unique_name_in_owner = true
+title = "New Folder Detected"

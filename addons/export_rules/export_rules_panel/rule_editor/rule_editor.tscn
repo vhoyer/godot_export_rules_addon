@@ -1,0 +1,115 @@
+[gd_scene format=3 uid="uid://druleedit0001"]
+
+[ext_resource type="Script" uid="uid://spqeyaj1yva7" path="res://addons/export_rules/export_rules_panel/rule_editor/rule_editor.gd" id="1_script"]
+
+[node name="RuleEditor" type="VBoxContainer" unique_id=703997482]
+custom_minimum_size = Vector2(360, 0)
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -180.0
+grow_horizontal = 0
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_script")
+
+[node name="Placeholder" type="Label" parent="." unique_id=1227946480]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+text = "Select a rule to edit it."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="EditorContent" type="VBoxContainer" parent="." unique_id=1122109774]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PathLabel" type="Label" parent="EditorContent" unique_id=1104218561]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(10, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3
+
+[node name="TagsTitle" type="Label" parent="EditorContent" unique_id=1672384080]
+layout_mode = 2
+text = "Required Feature Tags:"
+
+[node name="TagsHint" type="Label" parent="EditorContent" unique_id=658015127]
+modulate = Color(1, 1, 1, 0.6)
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Path is included only in presets that have ALL of these tags. Leave empty to always exclude from all presets."
+autowrap_mode = 3
+
+[node name="TagsFlow" type="HFlowContainer" parent="EditorContent" unique_id=2009927774]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AddTagRow" type="HBoxContainer" parent="EditorContent" unique_id=2141923567]
+layout_mode = 2
+
+[node name="NewTagEdit" type="LineEdit" parent="EditorContent/AddTagRow" unique_id=1739894583]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Tag name (e.g. steam, demo)"
+
+[node name="AddTagButton" type="Button" parent="EditorContent/AddTagRow" unique_id=1750005269]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Tag"
+
+[node name="HSeparator" type="HSeparator" parent="EditorContent" unique_id=1826525718]
+layout_mode = 2
+
+[node name="CommentLabel" type="Label" parent="EditorContent" unique_id=1299842160]
+layout_mode = 2
+text = "Comment:"
+
+[node name="CommentEdit" type="LineEdit" parent="EditorContent" unique_id=951778379]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Optional description"
+
+[node name="HSeparator2" type="HSeparator" parent="EditorContent" unique_id=2002423854]
+layout_mode = 2
+
+[node name="PreviewLabel" type="Label" parent="EditorContent" unique_id=1225016141]
+layout_mode = 2
+text = "Export Preset Preview:"
+
+[node name="PresetPreviewTree" type="Tree" parent="EditorContent" unique_id=1910269069]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+column_titles_visible = true
+hide_root = true
+
+[node name="HSeparator3" type="HSeparator" parent="EditorContent" unique_id=1524327125]
+layout_mode = 2
+
+[node name="RuleActions" type="HBoxContainer" parent="EditorContent" unique_id=1367360832]
+layout_mode = 2
+
+[node name="AddRuleButton" type="Button" parent="EditorContent/RuleActions" unique_id=1029003801]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Add Rule"
+
+[node name="DeleteButton" type="Button" parent="EditorContent/RuleActions" unique_id=469492704]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Delete Rule"
