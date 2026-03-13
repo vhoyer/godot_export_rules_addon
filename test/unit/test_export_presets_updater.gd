@@ -51,3 +51,7 @@ func test_gdignore_dir_is_ignored() -> void:
 	assert_true(updater._is_ignored_dir('res://.godot'))
 
 
+func test_regular_dir_with_gdignore_is_ignored() -> void:
+	assert_true(updater._is_ignored_dir('res://test/fixtures/gdignored'))
+
+

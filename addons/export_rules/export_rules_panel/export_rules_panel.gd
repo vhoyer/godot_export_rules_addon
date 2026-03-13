@@ -173,6 +173,8 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 
 	for d in subdirs:
 		var res_path := dir_path + d
+		if FileAccess.file_exists(res_path + '/.gdignore'):
+			continue
 		var rule := _config.get_rule_for_path(res_path)
 		var is_excluded: bool = not disabled and rule != null and rule.required_tags.is_empty()
 

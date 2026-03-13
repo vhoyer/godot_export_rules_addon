@@ -43,7 +43,8 @@
 		"res://addons/export_rules/export_rules_panel/rule_editor/preset_preview/",
 		"res://addons/export_rules/export_rules_panel/preset_preview/",
 		"res://entities/ignored folder/",
-		"res://entities/ask folder/"
+		"res://entities/ask folder/",
+		"res://test/fixtures/"
 	],
 	"new_folder_policy": 0,
 	"rules": [
@@ -69,11 +70,6 @@
 		{
 			"comment": "",
 			"path": "res://.gutconfig.json",
-			"required_tags": []
-		},
-		{
-			"comment": "",
-			"path": "res://test",
 			"required_tags": []
 		},
 		{
@@ -112,6 +108,11 @@
 			"required_tags": [
 				"s"
 			]
+		},
+		{
+			"comment": "",
+			"path": "res://test",
+			"required_tags": []
 		}
 	]
 }

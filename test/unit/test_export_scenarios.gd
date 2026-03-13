@@ -229,6 +229,19 @@ custom_features="steam"
 
 # --- Non-preset sections ---
 
+func test_files_in_gdignored_folder_are_not_included() -> void:
+	var cfg := _parse_presets("""
+[preset.0]
+name="Generic"
+""")
+	updater._apply_rules(_make_config([]), cfg)
+	assert_false(_export_files(cfg, 'preset.0').has('res://test/fixtures/gdignored/sample.gd'))
+	var include_filter := cfg.get_value('preset.0', 'include_filter', '') as String
+	assert_false(include_filter.contains('test/fixtures/gdignored/'), 'files in .gdignore folder must not appear in include_filter')
+
+
+# --- Non-preset sections ---
+
 func test_non_preset_sections_are_not_modified() -> void:
 	var cfg := _parse_presets("""
 [general]
