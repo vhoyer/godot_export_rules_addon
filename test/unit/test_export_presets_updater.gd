@@ -40,18 +40,3 @@ func test_preset_dot_only_is_not_valid() -> void:
 # coverage (real project files) is more meaningful than unit tests here.
 
 
-# --- _is_ignored_dir ---
-
-func test_regular_dir_is_not_ignored() -> void:
-	assert_false(updater._is_ignored_dir('res://scenes'))
-
-
-func test_gdignore_dir_is_ignored() -> void:
-	# .godot/ contains a .gdignore (and is itself dot-prefixed, so doubly ignored)
-	assert_true(updater._is_ignored_dir('res://.godot'))
-
-
-func test_regular_dir_with_gdignore_is_ignored() -> void:
-	assert_true(updater._is_ignored_dir('res://test/fixtures/gdignored'))
-
-

@@ -32,6 +32,7 @@ script = ExtResource("1_script")
 
 [node name="Placeholder" type="Label" parent="." unique_id=1227946480]
 unique_name_in_owner = true
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 text = "Select a rule to edit it."

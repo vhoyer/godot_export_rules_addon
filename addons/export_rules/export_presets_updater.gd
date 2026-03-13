@@ -2,8 +2,8 @@
 extends RefCounted
 
 const ExportRulesConfig = preload('res://addons/export_rules/export_rules_config.gd')
+const ExportFilesystem = preload('res://addons/export_rules/export_filesystem.gd')
 const PRESETS_PATH:= 'res://export_presets.cfg'
-const EXCLUDED_FILES: Array[String] = ['project.godot', 'export_presets.cfg', 'export_rules.json']
 
 
 ## Update export_presets.cfg based on the given config rules.
@@ -74,17 +74,13 @@ func _collect_included_recursive(dir_res_path: String, rules: Array, ignored_glo
 	dir.list_dir_begin()
 	var entry_name:= dir.get_next()
 	while entry_name != '':
-		if not entry_name.begins_with('.'):
-			var full_res_path: String
-			if dir_res_path.ends_with('/'):
-				full_res_path = dir_res_path + entry_name
-			else:
-				full_res_path = dir_res_path + '/' + entry_name
+		if not ExportFilesystem.should_skip_entry(entry_name):
+			var full_res_path := dir_res_path + entry_name
 			if dir.current_is_dir():
-				if not _is_ignored_dir(full_res_path):
-					_collect_included_recursive(full_res_path, rules, ignored_globs, preset_tags, resource_files, non_resource_files)
-			elif not entry_name.ends_with('.import') and not entry_name.ends_with('.uid') and not entry_name in EXCLUDED_FILES:
-				if not _matches_any_glob(entry_name, ignored_globs):
+				if not ExportFilesystem.is_ignored_dir(full_res_path):
+					_collect_included_recursive(full_res_path + '/', rules, ignored_globs, preset_tags, resource_files, non_resource_files)
+			else:
+				if not ExportFilesystem.matches_any_glob(entry_name, ignored_globs):
 					var rule = _find_matching_rule(full_res_path, rules)
 					if rule == null or rule.should_include_for_tags(preset_tags):
 						if ResourceLoader.exists(full_res_path):
@@ -93,17 +89,6 @@ func _collect_included_recursive(dir_res_path: String, rules: Array, ignored_glo
 							non_resource_files.append(full_res_path.trim_prefix('res://'))
 		entry_name = dir.get_next()
 	dir.list_dir_end()
-
-
-func _matches_any_glob(filename: String, ignored_globs: Array) -> bool:
-	for pattern in ignored_globs:
-		if filename.match(pattern):
-			return true
-	return false
-
-
-func _is_ignored_dir(dir_res_path: String) -> bool:
-	return FileAccess.file_exists(dir_res_path + '/.gdignore')
 
 
 func _find_matching_rule(file_path: String, rules: Array):

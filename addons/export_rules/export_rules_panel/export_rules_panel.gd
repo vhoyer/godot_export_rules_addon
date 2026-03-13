@@ -3,8 +3,8 @@ extends VBoxContainer
 
 const ExportPresetsUpdater = preload('res://addons/export_rules/export_presets_updater.gd')
 const ExportRulesConfig = preload('res://addons/export_rules/export_rules_config.gd')
+const ExportFilesystem = preload('res://addons/export_rules/export_filesystem.gd')
 const PathRule = preload('res://addons/export_rules/path_rule.gd')
-const HIDDEN_FILES: Array[String] = ['project.godot', 'export_presets.cfg', 'export_rules.json']
 
 var _config: ExportRulesConfig
 var _plugin: EditorPlugin
@@ -158,10 +158,10 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 	dir.list_dir_begin()
 	var entry := dir.get_next()
 	while entry != '':
-		if not entry.begins_with('.'):
+		if not ExportFilesystem.should_skip_entry(entry):
 			if dir.current_is_dir():
 				subdirs.append(entry)
-			elif not entry.ends_with('.import') and not entry.ends_with('.uid') and not entry in HIDDEN_FILES:
+			else:
 				files.append(entry)
 		entry = dir.get_next()
 	dir.list_dir_end()
@@ -173,7 +173,7 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 
 	for d in subdirs:
 		var res_path := dir_path + d
-		if FileAccess.file_exists(res_path + '/.gdignore'):
+		if ExportFilesystem.is_ignored_dir(res_path):
 			continue
 		var rule := _config.get_rule_for_path(res_path)
 		var is_excluded: bool = not disabled and rule != null and rule.required_tags.is_empty()
@@ -234,7 +234,7 @@ func _build_tree_from_filesystem(dir_path: String, parent_item: TreeItem, disabl
 			item.set_custom_bg_color(0, inherited_bg)
 			item.set_custom_bg_color(1, inherited_bg)
 
-		if _is_glob_ignored(f):
+		if ExportFilesystem.matches_any_glob(f, _config.ignored_globs):
 			_apply_glob_ignored_style(item)
 		elif disabled:
 			_apply_disabled_style(item)
@@ -518,13 +518,6 @@ func _on_ask_dialog_confirmed() -> void:
 		refresh_file_tree()
 		_set_status('Excluded new folder: ' + _pending_new_path)
 	_pending_new_path = ''
-
-
-func _is_glob_ignored(filename: String) -> bool:
-	for pattern in _config.ignored_globs:
-		if filename.match(pattern):
-			return true
-	return false
 
 
 func _on_ignored_globs_changed(text: String) -> void:
