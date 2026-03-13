@@ -11,7 +11,7 @@ corner_radius_bottom_left = 4
 corner_detail = 4
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pittw"]
-bg_color = Color(0.2, 0.15333335, 0, 1)
+bg_color = Color(1, 0.7666667, 0, 0.15686275)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
